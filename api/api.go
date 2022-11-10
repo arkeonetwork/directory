@@ -40,7 +40,10 @@ func (a *ApiService) Start() (chan struct{}, error) {
 
 func (a *ApiService) start(doneChan chan struct{}) {
 	log.Infof("starting http service on %s", a.params.ListenAddr)
-	log.Fatal(http.ListenAndServe(a.params.ListenAddr, a.router))
+	if err := http.ListenAndServe(a.params.ListenAddr, a.router); err != nil {
+		log.Errorf("error from http listener: %+v", err)
+	}
+	doneChan <- struct{}{}
 }
 
 func buildRouter() *mux.Router {

@@ -4,6 +4,8 @@
 package logging
 
 import (
+	"os"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -15,6 +17,8 @@ type Logger interface {
 	logrus.FieldLogger
 }
 
+const timestampFormat = ""
+
 var logger Logger
 
 func init() {
@@ -22,10 +26,13 @@ func init() {
 
 	logrus.SetLevel(logrus.DebugLevel)
 	logrus.SetReportCaller(true)
-	logrus.SetFormatter(&logrus.JSONFormatter{
-		TimestampFormat: "2006-01-02T15:04:05.999Z07:00",
-		PrettyPrint:     false,
-	})
+	logrus.SetFormatter(&logrus.TextFormatter{TimestampFormat: timestampFormat})
+	if os.Getenv("ARKEO_DIR_JSON_LOGS") == "true" {
+		logrus.SetFormatter(&logrus.JSONFormatter{
+			TimestampFormat: "2006-01-02T15:04:05.999Z07:00",
+			PrettyPrint:     false,
+		})
+	}
 }
 
 // WithFields adds field annotations to the logger instance

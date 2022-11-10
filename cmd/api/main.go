@@ -23,4 +23,5 @@ func main() {
 		panic(fmt.Sprintf("error starting api service: %+v", err))
 	}
 	<-done
+	log.Info("api service complete")
 }
