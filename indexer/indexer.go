@@ -10,6 +10,9 @@ import (
 	"syscall"
 
 	"github.com/ArkeoNetwork/directory/internal/logging"
+	"github.com/ArkeoNetwork/directory/pkg/db"
+	"github.com/ArkeoNetwork/directory/pkg/types"
+	"github.com/pkg/errors"
 	tmlog "github.com/tendermint/tendermint/libs/log"
 	tmclient "github.com/tendermint/tendermint/rpc/client/http"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -18,20 +21,13 @@ import (
 
 var log = logging.WithoutFields()
 
-type JsonRpcMsg struct {
-	ID      int    `json:"id"`
-	Jsonrpc string `json:"jsonrpc"`
+type IndexerAppParams struct {
+	db.DBConfig
 }
 
-type SubscribeMsg struct {
-	JsonRpcMsg
-	Method string   `json:"method"`
-	Params []string `json:"params"`
-}
-
-type IndexerAppParams struct{}
 type IndexerApp struct {
 	params IndexerAppParams
+	db     *db.DirectoryDB
 	done   chan struct{}
 }
 
@@ -45,7 +41,11 @@ const (
 
 func NewIndexer(params IndexerAppParams) *IndexerApp {
 	configure()
-	return &IndexerApp{params: params}
+	d, err := db.New(params.DBConfig)
+	if err != nil {
+		panic(fmt.Sprintf("error connecting to the db: %+v", err))
+	}
+	return &IndexerApp{params: params, db: d}
 }
 
 func (a *IndexerApp) Run() (done <-chan struct{}, err error) {
@@ -89,14 +89,16 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 			}
 			log.Debugf("received block: %d", data.Header.Height)
 		case evt := <-bondProviderEvents:
-			log.Debugf("received bondProviderEvent: %#v", evt)
 			converted := convertEvent("provider_bond", evt.Events)
 			providerBondEvent, err := parseProviderBondEvent(converted)
 			if err != nil {
 				log.Errorf("error parsing providerBondEvent: %+v", err)
 				continue
 			}
-			storeProviderBondEvent(providerBondEvent)
+			if err = a.storeProviderBondEvent(providerBondEvent); err != nil {
+				log.Errorf("error storing provider bond event: %+v", err)
+				continue
+			}
 		case <-quit:
 			log.Infof("received os quit signal")
 			return nil
@@ -104,9 +106,22 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 	}
 }
 
-func storeProviderBondEvent(evt ProviderBondEvent) error {
-	log.Infof("storing ProviderBondEvent %#v", evt)
+func (a *IndexerApp) storeProviderBondEvent(evt types.ProviderBondEvent) error {
+	provider, err := a.db.FindProvider(evt.Pubkey, evt.Chain)
+	if err != nil {
+		return errors.Wrapf(err, "error finding provider %s for chain %s", evt.Pubkey, evt.Chain)
+	}
+	if provider == nil {
+		// new provider for chain, insert
+		provider := &db.ArkeoProvider{Pubkey: evt.Pubkey, Chain: evt.Chain, Bond: evt.BondAbsolute.String()}
+		entity, err := a.db.InsertProvider(provider)
+		if err != nil {
+			return errors.Wrapf(err, "error inserting provider %s %s", evt.Pubkey, evt.Chain)
+		}
+		log.Debugf("inserted provider record %d for %s %s", entity.ID, evt.Pubkey, evt.Chain)
+	}
 
+	// now store bond event for provider
 	return nil
 }
 
@@ -117,22 +132,15 @@ func validateChain(chain string) (ok bool) {
 	return
 }
 
-type ProviderBondEvent struct {
-	PubKey       string
-	Chain        string
-	BondRelative *big.Int
-	BondAbsolute *big.Int
-}
-
-func parseProviderBondEvent(input map[string]string) (ProviderBondEvent, error) {
+func parseProviderBondEvent(input map[string]string) (types.ProviderBondEvent, error) {
 	// var err error
 	var ok bool
-	evt := ProviderBondEvent{}
+	evt := types.ProviderBondEvent{}
 
 	for k, v := range input {
 		switch k {
 		case "pubkey":
-			evt.PubKey = v
+			evt.Pubkey = v
 		case "chain":
 			if ok = validateChain(v); !ok {
 				return evt, fmt.Errorf("invalid chain %s", v)

@@ -1,6 +1,8 @@
 package indexer
 
 import (
+	"os"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/legacy"
@@ -54,12 +56,16 @@ func NewEncoding(registerInterfaces ...func(r types.InterfaceRegistry)) *encodin
 	}
 }
 
-const mnemonic = "blade soda fish scale custom thumb foam garden boil enter stage cover spatial nation alert shield witness predict shaft harbor grant inmate ketchup tiger"
-
 // configure
 func configure() {
 	sdkConfig := sdk.GetConfig()
 	sdkConfig.SetBech32PrefixForAccount(bech32PrefixAccAddr, bech32PrefixAccPub)
+
+	var mnemonic = os.Getenv("ARKEO_DIRECTORY_MNEMONIC")
+	if mnemonic == "" {
+		return
+	}
+
 	encConfig := NewEncoding()
 
 	// doing this so it dumps the seeds addr and pubkey for use in arkeo txs like bond provider

@@ -1,0 +1,19 @@
+version: '3.6'
+
+networks:
+  arkeo:
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres:15.1-alpine
+    container_name: arkeo-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: arkeo_directory
+      POSTGRES_USER: arkeo
+      POSTGRES_PASSWORD: arkeo123
+    ports:
+      - 5432:5432
+    networks:
+      - arkeo
