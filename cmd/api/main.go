@@ -16,12 +16,12 @@ func init() {
 }
 
 func main() {
-	log.Info("starting api service")
+	log.Info("starting api")
 	api := api.NewApiService(api.ApiServiceParams{ /* determine config mechanism */ })
 	done, err := api.Start()
 	if err != nil {
 		panic(fmt.Sprintf("error starting api service: %+v", err))
 	}
 	<-done
-	log.Info("api service complete")
+	log.Info("api complete")
 }
