@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
 )
 
 type ArkeoProvider struct {
@@ -13,25 +14,43 @@ type ArkeoProvider struct {
 
 type ArkeoProviders []*ArkeoProvider
 
-// find a provider by unique id (pubkey)
-func getProvider(w http.ResponseWriter, r *http.Request) {
+// find a provider by unique id (pubkey+chain)
+func (a *ApiService) getProvider(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	pubkey := vars["pubkey"]
-	provider, err := findProvider(pubkey)
+	chain := r.FormValue("chain")
+	if pubkey == "" {
+		respondWithError(w, http.StatusBadRequest, "pubkey is required")
+		return
+	}
+	if chain == "" {
+		respondWithError(w, http.StatusBadRequest, "chain is required")
+		return
+	}
+	// "bitcoin-mainnet"
+	provider, err := a.findProvider(pubkey, chain)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("error finding provider with pubkey %s", pubkey))
+		return
 	}
 
 	respondWithJSON(w, http.StatusOK, provider)
 }
 
 // search providers
-func searchProviders(w http.ResponseWriter, r *http.Request) {
+func (a *ApiService) searchProviders(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, ArkeoProviders{})
 }
 
 // just returns provider w/ passed pubkey
-func findProvider(pubkey string) (*ArkeoProvider, error) {
-	// TODO provider, err := db.findProvider(pubkey)
-	return &ArkeoProvider{Pubkey: pubkey}, nil
+func (a *ApiService) findProvider(pubkey, chain string) (*ArkeoProvider, error) {
+	dbProvider, err := a.db.FindProvider(pubkey, chain)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error finding provider for %s %s", pubkey, chain)
+	}
+	if dbProvider == nil {
+		return nil, nil
+	}
+	provider := &ArkeoProvider{Pubkey: dbProvider.Pubkey}
+	return provider, nil
 }
