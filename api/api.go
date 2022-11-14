@@ -1,24 +1,23 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/ArkeoNetwork/directory/internal/logging"
+	"github.com/ArkeoNetwork/directory/pkg/db"
 	"github.com/gorilla/mux"
 )
 
 type ApiService struct {
 	router *mux.Router
 	params ApiServiceParams
+	db     *db.DirectoryDB
 }
 
 type ApiServiceParams struct {
 	ListenAddr string
-	// DbHost string
-	// DbPort string
-	// DbUser string
-	// DbPass string
-	// DbName string
+	DBConfig   db.DBConfig
 }
 
 const DefaultListenAddress = "localhost:7777"
@@ -29,7 +28,14 @@ func NewApiService(params ApiServiceParams) *ApiService {
 	if params.ListenAddr == "" {
 		params.ListenAddr = DefaultListenAddress
 	}
-	return &ApiService{params: params, router: buildRouter()}
+	database, err := db.New(params.DBConfig)
+	if err != nil {
+		panic(fmt.Sprintf("failed to instantiate db: %+v", err))
+	}
+	a := &ApiService{params: params, db: database}
+	a.router = buildRouter(a)
+
+	return a
 }
 
 func (a *ApiService) Start() (chan struct{}, error) {
@@ -46,14 +52,14 @@ func (a *ApiService) start(doneChan chan struct{}) {
 	doneChan <- struct{}{}
 }
 
-func buildRouter() *mux.Router {
+func buildRouter(a *ApiService) *mux.Router {
 	router := mux.NewRouter()
 	router.HandleFunc("/health", handleHealth).Methods(http.MethodGet)
 	router.HandleFunc("/stats", getStats).Methods(http.MethodGet)
 
 	providerRouter := router.PathPrefix("/provider").Subrouter()
-	providerRouter.HandleFunc("/{pubkey}", getProvider).Methods(http.MethodGet)
-	providerRouter.HandleFunc("/search", searchProviders).Methods(http.MethodGet)
+	providerRouter.HandleFunc("/{pubkey}", a.getProvider).Methods(http.MethodGet)
+	providerRouter.HandleFunc("/search", a.searchProviders).Methods(http.MethodGet)
 
 	// router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 	// 	tpl, _ := route.GetPathTemplate()
