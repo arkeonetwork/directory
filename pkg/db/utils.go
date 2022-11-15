@@ -32,7 +32,7 @@ func selectOne(conn *pgxpool.Conn, sql string, target interface{}, params ...int
 		if unwrapped != nil && unwrapped.Error() == "no rows in result set" {
 			return nil
 		}
-		return errors.Wrapf(err, "error finding provider for params: %v", params)
+		return errors.Wrapf(err, "error selecting with params: %v", params)
 	}
 	return nil
 }

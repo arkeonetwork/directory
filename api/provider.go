@@ -30,6 +30,7 @@ func (a *ApiService) getProvider(w http.ResponseWriter, r *http.Request) {
 	// "bitcoin-mainnet"
 	provider, err := a.findProvider(pubkey, chain)
 	if err != nil {
+		log.Errorf("error finding provider for %s chain %s: %+v", pubkey, chain, err)
 		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("error finding provider with pubkey %s", pubkey))
 		return
 	}
