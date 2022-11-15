@@ -2,6 +2,8 @@ package api
 
 import (
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 // swagger:model ArkeoStats
@@ -52,5 +54,11 @@ func getStatsArkeo(w http.ResponseWriter, r *http.Request) {
 //	500: InternalServerError
 
 func getStatsChain(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	chain := vars["chain"]
+	if chain == "" {
+		respondWithError(w, http.StatusBadRequest, "chain is required")
+		return
+	}
 	respondWithJSON(w, http.StatusOK, &ChainStats{})
 }
