@@ -13,13 +13,20 @@ type ArkeoProvider struct {
 	Pubkey string
 }
 
+// Contains info about a 500 Internal Server Error response
+// swagger:model InternalServerError
+type InternalServerError struct {
+	Message string `json:"message"`
+}
+
+// swagger:model ArkeoProviders
 type ArkeoProviders []*ArkeoProvider
 
-// swagger:route Get /provider/{pubkey}/ getProvider
+// swagger:route Get /provider/{pubkey} getProvider
 //
 // Get a specific ArkeoProvider by a unique id (pubkey+chain)
 //
-// parameters:
+// Parameters:
 //   + name: pubkey
 //     in: path
 //     description: provider public key
@@ -31,7 +38,7 @@ type ArkeoProviders []*ArkeoProvider
 //     required: true
 //     type: string
 //
-// responses:
+// Responses:
 //
 //	200: ArkeoProvider
 //	500: InternalServerError
@@ -58,7 +65,32 @@ func (a *ApiService) getProvider(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, provider)
 }
 
-// search providers
+// swagger:route Get /search searchProviders
+//
+// queries the service for a list of providers
+//
+// Parameters:
+//   + name: sort
+//     in: query
+//     description: defines how to sort the list of providers
+//     required: false
+//     schema:
+//      type: string
+//      enum: age, conract-count, amount-paid
+//   + name: distance
+//     in: query
+//     description: maximum distance in kilometers from provided coordinates
+//     required: false
+//     type: integer
+//   + name: coordinates
+//	   description: latitude and longitude (required when providing distance filter, example 40.7127837,-74.0059413)
+//     in: query
+//     required: false
+// Responses:
+//
+//	200: ArkeoProviders
+//	500: InternalServerError
+
 func (a *ApiService) searchProviders(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, ArkeoProviders{})
 }
