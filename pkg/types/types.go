@@ -27,3 +27,8 @@ type ModProviderEvent struct {
 	SubscriptionRate    int64
 	PayAsYouGoRate      int64
 }
+
+type Coordinates struct {
+	Latitude  float32
+	Longitude float32
+}
