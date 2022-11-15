@@ -87,10 +87,12 @@ func (a *ApiService) getProvider(w http.ResponseWriter, r *http.Request) {
 //	   description: latitude and longitude (required when providing distance filter, example 40.7127837,-74.0059413)
 //     in: query
 //     required: false
+//     type: string
 //   + name: min-validator-payments
 //	   description: minimum amount the provider has paid to validators
 //     in: query
 //     required: false
+//	   type: integer
 //   + name: min-provider-age
 //	   description: minimum age of provider
 //     in: query
