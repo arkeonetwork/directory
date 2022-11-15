@@ -25,6 +25,22 @@ func insert(conn *pgxpool.Conn, sql string, params ...interface{}) (*Entity, err
 	return &Entity{ID: id, Created: created, Updated: updated}, nil
 }
 
+func update(conn *pgxpool.Conn, sql string, params ...interface{}) (*Entity, error) {
+	var (
+		id      int64
+		created time.Time
+		updated time.Time
+		err     error
+	)
+	log.Debugf("sql: %s", sql)
+	row := conn.QueryRow(context.Background(), sql, params...)
+	if err = row.Scan(&id, &created, &updated); err != nil {
+		return nil, errors.Wrap(err, "error inserting")
+	}
+
+	return &Entity{ID: id, Created: created, Updated: updated}, nil
+}
+
 // if the query returns no rows, the passed target remains unchanged. target must be a pointer
 func selectOne(conn *pgxpool.Conn, sql string, target interface{}, params ...interface{}) error {
 	if err := pgxscan.Get(context.Background(), conn, target, sqlFindProvider, params...); err != nil {

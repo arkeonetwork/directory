@@ -96,7 +96,7 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 				log.Errorf("error parsing providerBondEvent: %+v", err)
 				continue
 			}
-			if err = a.storeProviderBondEvent(bondProviderEvent); err != nil {
+			if err = a.handleBondProviderEvent(bondProviderEvent); err != nil {
 				log.Errorf("error storing provider bond event: %+v", err)
 				continue
 			}
@@ -107,6 +107,10 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 				log.Errorf("error parsing providerModEvent: %+v", err)
 				continue
 			}
+			if err = a.handleModProviderEvent(modProviderEvent); err != nil {
+				log.Errorf("error storing provider bond event: %+v", err)
+				continue
+			}
 			log.Infof("providerModEvent: %#v", modProviderEvent)
 		case <-quit:
 			log.Infof("received os quit signal")
@@ -115,23 +119,62 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 	}
 }
 
-func (a *IndexerApp) storeProviderBondEvent(evt types.BondProviderEvent) error {
+func (a *IndexerApp) handleModProviderEvent(evt types.ModProviderEvent) error {
+	provider, err := a.db.FindProvider(evt.Pubkey, evt.Chain)
+	if err != nil {
+		return errors.Wrapf(err, "error finding provider %s for chain %s", evt.Pubkey, evt.Chain)
+	}
+	if provider == nil {
+		return fmt.Errorf("cannot mod provider, DNE %s %s", evt.Pubkey, evt.Chain)
+	}
+	provider.MetadataURI = evt.MetadataURI
+	provider.MetadataNonce = evt.MetadataNonce
+	provider.Status = evt.Status
+	provider.MinContractDuration = evt.MinContractDuration
+	provider.MaxContractDuration = evt.MaxContractDuration
+	provider.SubscriptionRate = evt.SubscriptionRate
+	provider.PayAsYouGoRate = evt.PayAsYouGoRate
+
+	if _, err = a.db.UpdateProvider(provider); err != nil {
+		return errors.Wrapf(err, "error updating provider for mod event %s chain %s", provider.Pubkey, provider.Chain)
+	}
+	log.Infof("updated provider %s chain %s", provider.Pubkey, provider.Chain)
+	return nil
+}
+
+func (a *IndexerApp) handleBondProviderEvent(evt types.BondProviderEvent) error {
 	provider, err := a.db.FindProvider(evt.Pubkey, evt.Chain)
 	if err != nil {
 		return errors.Wrapf(err, "error finding provider %s for chain %s", evt.Pubkey, evt.Chain)
 	}
 	if provider == nil {
 		// new provider for chain, insert
-		provider := &db.ArkeoProvider{Pubkey: evt.Pubkey, Chain: evt.Chain, Bond: evt.BondAbsolute.String()}
-		entity, err := a.db.InsertProvider(provider)
-		if err != nil {
-			return errors.Wrapf(err, "error inserting provider %s %s", evt.Pubkey, evt.Chain)
+		if provider, err = a.createProvider(evt); err != nil {
+			return errors.Wrapf(err, "error creating provider %s chain %s", evt.Pubkey, evt.Chain)
 		}
-		log.Debugf("inserted provider record %d for %s %s", entity.ID, evt.Pubkey, evt.Chain)
+	} else {
+		if evt.BondAbsolute != nil {
+			provider.Bond = evt.BondAbsolute.String()
+		}
+		if _, err = a.db.UpdateProvider(provider); err != nil {
+			return errors.Wrapf(err, "error updating provider for bond event %s chain %s", provider.Pubkey, provider.Chain)
+		}
 	}
 
+	log.Debugf("handled bond provider event for %s chain %s", provider.Pubkey, provider.Chain)
 	// now store bond event for provider
 	return nil
+}
+
+func (a *IndexerApp) createProvider(evt types.BondProviderEvent) (*db.ArkeoProvider, error) {
+	// new provider for chain, insert
+	provider := &db.ArkeoProvider{Pubkey: evt.Pubkey, Chain: evt.Chain, Bond: evt.BondAbsolute.String()}
+	entity, err := a.db.InsertProvider(provider)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error inserting provider %s %s", evt.Pubkey, evt.Chain)
+	}
+	log.Debugf("inserted provider record %d for %s %s", entity.ID, evt.Pubkey, evt.Chain)
+	return provider, nil
 }
 
 var validChains = map[string]struct{}{"arkeo-mainnet": {}, "eth-mainnet": {}, "btc-mainnet": {}}
