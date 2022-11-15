@@ -22,6 +22,12 @@ import (
 var log = logging.WithoutFields()
 
 type IndexerAppParams struct {
+	ArkeoApi            string
+	TendermintApi       string
+	TendermintWs        string
+	ChainID             string
+	Bech32PrefixAccAddr string
+	Bech32PrefixAccPub  string
 	db.DBConfig
 }
 
@@ -30,14 +36,6 @@ type IndexerApp struct {
 	db     *db.DirectoryDB
 	done   chan struct{}
 }
-
-const (
-	// todo configs
-	chainID             = "arkeo"
-	bech32PrefixAccAddr = "rko"
-	bech32PrefixAccPub  = "rkopub"
-	tendermintWsUrl     = "tcp://localhost:26657"
-)
 
 func NewIndexer(params IndexerAppParams) *IndexerApp {
 	configure()
@@ -56,8 +54,8 @@ func (a *IndexerApp) Run() (done <-chan struct{}, err error) {
 }
 
 func (a *IndexerApp) start() {
-	log.Infof("starting realtime indexer")
-	client, err := tmclient.New(tendermintWsUrl, "/websocket")
+	log.Infof("starting realtime indexing using /websocket at %s", a.params.TendermintWs)
+	client, err := tmclient.New(a.params.TendermintWs, "/websocket")
 	if err != nil {
 		log.Errorf("failure to create websocket client: %+v", err)
 		panic(err)

@@ -28,6 +28,12 @@ type encodingConfig struct {
 	Amino             *codec.LegacyAmino
 }
 
+const (
+	// todo remove
+	bech32PrefixAccAddr = "rko"
+	bech32PrefixAccPub  = "rkopub"
+)
+
 // NewEncoding registers all base protobuf types by default as well as any custom types passed in
 func NewEncoding(registerInterfaces ...func(r types.InterfaceRegistry)) *encodingConfig {
 	registry := types.NewInterfaceRegistry()

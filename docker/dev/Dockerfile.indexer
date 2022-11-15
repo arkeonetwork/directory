@@ -1,0 +1,16 @@
+# development docker image for compose
+FROM golang:1.19-buster as builder
+
+RUN apt update && apt upgrade -y
+
+COPY . /root/src
+
+WORKDIR /root/src/cmd/indexer
+RUN go build
+
+FROM gcr.io/distroless/base-debian11
+
+WORKDIR /
+COPY --from=builder /root/src/cmd/indexer/indexer .
+
+ENTRYPOINT ["/indexer"]
