@@ -8,13 +8,34 @@ import (
 	"github.com/pkg/errors"
 )
 
+// swagger:model ArkeoProvider
 type ArkeoProvider struct {
 	Pubkey string
 }
 
 type ArkeoProviders []*ArkeoProvider
 
-// find a provider by unique id (pubkey+chain)
+// swagger:route Get /provider/{pubkey}/ getProvider
+//
+// Get a specific ArkeoProvider by a unique id (pubkey+chain)
+//
+// parameters:
+//   + name: pubkey
+//     in: path
+//     description: provider public key
+//     required: true
+//     type: string
+//   + name: chain
+//	   in: query
+//     description: chain identifier
+//     required: true
+//     type: string
+//
+// responses:
+//
+//	200: ArkeoProvider
+//	500: InternalServerError
+
 func (a *ApiService) getProvider(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	pubkey := vars["pubkey"]
