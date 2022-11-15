@@ -22,7 +22,8 @@ services:
   arkeo-protocol:
     container_name: arkeo-protocol
     image: arkeo-protocol:latest
-    # command: "/scripts/genesis.sh"
+    environment:
+      - ARKEOD_RPC_LADDR=tcp://0.0.0.0:26657
     networks:
       - arkeo
     ports:
