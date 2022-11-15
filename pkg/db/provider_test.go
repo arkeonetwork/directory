@@ -29,8 +29,8 @@ func TestFindProvider(t *testing.T) {
 	if err != nil {
 		t.Errorf("error getting db: %+v", err)
 	}
-	pubkey := "rkopub1addwnpepqddwdpe064eh454dhw5em8zv7x5mf9c2pj59xlvf8xdecudd82w4kv7607j"
-	chain := "bitcoin-mainnet"
+	pubkey := "rkopub1addwnpepqdff9z6t6qctnn0sz7ep4sk06s8pnyndnfszjsxhsqt8zyyltl6jjhf3wp3"
+	chain := "btc-mainnet"
 	provider, err := db.FindProvider(pubkey, chain)
 	if err != nil {
 		t.Errorf("error finding provider: %+v", err)

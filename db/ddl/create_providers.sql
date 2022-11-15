@@ -1,4 +1,4 @@
--- drop table if exists providers;
+drop table if exists providers;
 
 create table providers
 (
@@ -9,7 +9,14 @@ create table providers
     updated timestamptz default now() not null,
     pubkey  text                      not null,
     chain   text                      not null,
-    bond    numeric                   not null
+    bond    numeric                   not null,
+    metadata_uri text,
+    metadata_nonce numeric,
+    status text references provider_status(status),
+    min_contract_duration numeric,
+    max_contract_duration numeric,
+    subscription_rate numeric,
+    paygo_rate numeric
 );
 
 alter table providers

@@ -2,9 +2,28 @@ package types
 
 import "math/big"
 
-type ProviderBondEvent struct {
+type BondProviderEvent struct {
 	Pubkey       string
 	Chain        string
 	BondRelative *big.Int
 	BondAbsolute *big.Int
+}
+
+type ProviderStatus string
+
+var (
+	ProviderStatusOnline  ProviderStatus = "Online"
+	ProviderStatusOffline ProviderStatus = "Offline"
+)
+
+type ModProviderEvent struct {
+	Pubkey              string
+	Chain               string
+	MetadataURI         string
+	MetadataNonce       uint64
+	Status              ProviderStatus
+	MinContractDuration int64
+	MaxContractDuration int64
+	SubscriptionRate    int64
+	PayAsYouGoRate      int64
 }
