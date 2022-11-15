@@ -76,3 +76,29 @@ func (d *DirectoryDB) FindProvider(pubkey string, chain string) (*ArkeoProvider,
 	}
 	return &provider, nil
 }
+
+func (d *DirectoryDB) InsertBondProviderEvent(providerID int64, evt types.BondProviderEvent) (*Entity, error) {
+	if evt.BondAbsolute == nil {
+		return nil, fmt.Errorf("nil BondAbsolute")
+	}
+	if evt.BondRelative == nil {
+		return nil, fmt.Errorf("nil BondRelative")
+	}
+	conn, err := d.getConnection()
+	defer conn.Release()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error obtaining db connection")
+	}
+
+	return insert(conn, sqlInsertBondProviderEvent, providerID, evt.BondRelative.String(), evt.BondAbsolute.String())
+}
+
+func (d *DirectoryDB) InsertModProviderEvent(providerID int64, evt types.ModProviderEvent) (*Entity, error) {
+	conn, err := d.getConnection()
+	defer conn.Release()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error obtaining db connection")
+	}
+
+	return insert(conn, sqlInsertModProviderEvent, providerID, evt.MetadataURI, evt.MetadataNonce, evt.Status, evt.MinContractDuration, evt.MaxContractDuration, evt.SubscriptionRate, evt.PayAsYouGoRate)
+}
