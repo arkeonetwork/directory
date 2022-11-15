@@ -76,7 +76,7 @@ func (a *ApiService) getProvider(w http.ResponseWriter, r *http.Request) {
 //     required: false
 //     schema:
 //      type: string
-//      enum: age, conract-count, amount-paid
+//      enum: age, conract_count, amount_paid
 //   + name: distance
 //     in: query
 //     description: maximum distance in kilometers from provided coordinates
@@ -86,6 +86,25 @@ func (a *ApiService) getProvider(w http.ResponseWriter, r *http.Request) {
 //	   description: latitude and longitude (required when providing distance filter, example 40.7127837,-74.0059413)
 //     in: query
 //     required: false
+//   + name: min-validator-payments
+//	   description: minimum amount the provider has paid to validators
+//     in: query
+//     required: false
+//   + name: min-provider-age
+//	   description: minimum age of provider
+//     in: query
+//     required: false
+//     type: integer
+//   + name: min-rate-lmit
+//	   description: min rate limit of provider in requests per seconds
+//     in: query
+//     required: false
+//	   type: integer
+//   + name: min-contracts
+//	   description: minimum number of contracts open with proivder
+//     in: query
+//     required: false
+//	   type: integer
 // Responses:
 //
 //	200: ArkeoProviders
