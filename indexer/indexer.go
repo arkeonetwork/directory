@@ -93,18 +93,18 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 			converted := convertEvent("provider_bond", evt.Events)
 			bondProviderEvent, err := parseBondProviderEvent(converted)
 			if err != nil {
-				log.Errorf("error parsing providerBondEvent: %+v", err)
+				log.Errorf("error parsing bondProviderEvent: %+v", err)
 				continue
 			}
 			if err = a.handleBondProviderEvent(bondProviderEvent); err != nil {
-				log.Errorf("error storing provider bond event: %+v", err)
+				log.Errorf("error handling provider bond event: %+v", err)
 				continue
 			}
 		case evt := <-modProviderEvents:
 			converted := convertEvent("provider_mod", evt.Events)
 			modProviderEvent, err := parseModProviderEvent(converted)
 			if err != nil {
-				log.Errorf("error parsing providerModEvent: %+v", err)
+				log.Errorf("error parsing modProviderEvent: %+v", err)
 				continue
 			}
 			if err = a.handleModProviderEvent(modProviderEvent); err != nil {
@@ -139,6 +139,9 @@ func (a *IndexerApp) handleModProviderEvent(evt types.ModProviderEvent) error {
 		return errors.Wrapf(err, "error updating provider for mod event %s chain %s", provider.Pubkey, provider.Chain)
 	}
 	log.Infof("updated provider %s chain %s", provider.Pubkey, provider.Chain)
+	if _, err = a.db.InsertModProviderEvent(provider.ID, evt); err != nil {
+		return errors.Wrapf(err, "error inserting ModProviderEvent for %s chain %s", evt.Pubkey, evt.Chain)
+	}
 	return nil
 }
 
@@ -157,12 +160,14 @@ func (a *IndexerApp) handleBondProviderEvent(evt types.BondProviderEvent) error 
 			provider.Bond = evt.BondAbsolute.String()
 		}
 		if _, err = a.db.UpdateProvider(provider); err != nil {
-			return errors.Wrapf(err, "error updating provider for bond event %s chain %s", provider.Pubkey, provider.Chain)
+			return errors.Wrapf(err, "error updating provider for bond event %s chain %s", evt.Pubkey, evt.Chain)
 		}
 	}
 
-	log.Debugf("handled bond provider event for %s chain %s", provider.Pubkey, provider.Chain)
-	// now store bond event for provider
+	log.Debugf("handled bond provider event for %s chain %s", evt.Pubkey, evt.Chain)
+	if _, err = a.db.InsertBondProviderEvent(provider.ID, evt); err != nil {
+		return errors.Wrapf(err, "error inserting BondProviderEvent for %s chain %s", evt.Pubkey, evt.Chain)
+	}
 	return nil
 }
 
