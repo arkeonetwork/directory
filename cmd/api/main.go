@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/ArkeoNetwork/directory/api"
-	"github.com/ArkeoNetwork/directory/internal/logging"
 	"github.com/ArkeoNetwork/directory/pkg/config"
 	"github.com/ArkeoNetwork/directory/pkg/db"
+	"github.com/ArkeoNetwork/directory/pkg/logging"
 )
 
 type Config struct {

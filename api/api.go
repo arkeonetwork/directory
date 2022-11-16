@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ArkeoNetwork/directory/internal/logging"
 	"github.com/ArkeoNetwork/directory/pkg/db"
+	"github.com/ArkeoNetwork/directory/pkg/logging"
 	"github.com/gorilla/mux"
 )
 
