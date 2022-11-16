@@ -117,6 +117,8 @@ func (a *ApiService) getProvider(w http.ResponseWriter, r *http.Request) {
 //	500: InternalServerError
 
 func (a *ApiService) searchProviders(response http.ResponseWriter, request *http.Request) {
+	// generate a params struct of strings to pass to a searchProviders(searchProviderParams) function
+	// for better testing...
 	sort := request.FormValue("sort")
 	maxDistanceInput := request.FormValue("maxDistance")
 	coordinatesInput := request.FormValue("coordinates")
@@ -125,6 +127,7 @@ func (a *ApiService) searchProviders(response http.ResponseWriter, request *http
 	minRateLimitInput := request.FormValue("min-rate-limit")
 	minOpenContractsInput := request.FormValue("min-open-contracts")
 
+	// do we want to allow this and just return an unsorted list of providers?
 	if sort == "" &&
 		maxDistanceInput == "" &&
 		coordinatesInput == "" &&
