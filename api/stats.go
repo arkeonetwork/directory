@@ -13,7 +13,7 @@ type ArkeoStats struct {
 	ContractsMedianDuration         int64
 	ContractsMedianRatePayPer       int64
 	ContractsMedianRateSubscription int64
-	ChainStats                      []*ChainStats // should this be a map instead?
+	ChainStats                      map[string]*ChainStats
 }
 
 // swagger:model ChainStats

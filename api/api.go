@@ -1,3 +1,7 @@
+// Package api Directory API.
+// Version: 0.0.1
+//
+// swagger:meta
 package api
 
 import (

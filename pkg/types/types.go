@@ -27,3 +27,31 @@ type ModProviderEvent struct {
 	SubscriptionRate    int64
 	PayAsYouGoRate      int64
 }
+
+type Coordinates struct {
+	Latitude  float64
+	Longitude float64
+}
+
+type ProviderSortKey string
+
+var (
+	ProviderSortKeyAge           ProviderSortKey = "age"
+	ProviderSortKeyContractCount ProviderSortKey = "contract_count"
+	ProviderSortKeyAmountPaid    ProviderSortKey = "anount_paid"
+)
+
+type ProviderSearchParams struct {
+	SortKey                   ProviderSortKey
+	MaxDistance               int64
+	IsMaxDistanceSet          bool
+	Coordinates               Coordinates
+	MinValidatorPayments      int64
+	IsMinValidatorPaymentsSet bool
+	MinProviderAge            int64
+	IsMinProviderAgeSet       bool
+	MinRateLimit              int64
+	IsMinRateLimitSet         bool
+	MinOpenContracts          int64
+	IsMinOpenContractsSet     bool
+}
