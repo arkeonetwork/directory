@@ -146,7 +146,6 @@ func (a *ApiService) searchProviders(response http.ResponseWriter, request *http
 		}
 	}
 
-	// TODO: create enum for sort keys
 	if maxDistanceInput != "" {
 		var err error
 		maxDistance, err := strconv.ParseInt(maxDistanceInput, 10, 64)
