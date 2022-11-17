@@ -1,16 +1,13 @@
 package indexer
 
 import (
-	"context"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/ArkeoNetwork/directory/pkg/db"
 	"github.com/ArkeoNetwork/directory/pkg/logging"
 	tmlog "github.com/tendermint/tendermint/libs/log"
 	tmclient "github.com/tendermint/tendermint/rpc/client/http"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 var log = logging.WithoutFields()
@@ -32,7 +29,7 @@ type IndexerApp struct {
 }
 
 func NewIndexer(params IndexerAppParams) *IndexerApp {
-	configure()
+	// configure()
 	d, err := db.New(params.DBConfig)
 	if err != nil {
 		panic(fmt.Sprintf("error connecting to the db: %+v", err))
@@ -63,30 +60,6 @@ func (a *IndexerApp) start() {
 	defer client.Stop()
 	a.consumeEvents(client)
 	a.done <- struct{}{}
-}
-
-// TODO: if there are multiple of the same type of event, this may be
-// problematic, multiple events may get purged into one (not sure)
-func convertEvent(etype string, raw map[string][]string) map[string]string {
-	newEvt := make(map[string]string, 0)
-
-	for k, v := range raw {
-		if strings.HasPrefix(k, etype+".") {
-			parts := strings.SplitN(k, ".", 2)
-			newEvt[parts[1]] = v[0]
-		}
-	}
-
-	return newEvt
-}
-
-func subscribe(client *tmclient.HTTP, query string) <-chan ctypes.ResultEvent {
-	out, err := client.Subscribe(context.Background(), "", query)
-	if err != nil {
-		log.Errorf("failed to subscribe to query", "err", err, "query", query)
-		os.Exit(1)
-	}
-	return out
 }
 
 var validChains = map[string]struct{}{"arkeo-mainnet": {}, "eth-mainnet": {}, "btc-mainnet": {}}

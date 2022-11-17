@@ -1,0 +1,16 @@
+
+alicekey=rkopub1addwnpepqv854fsqyc5nc09md5t0lj8dnm3zpghch3rrc9t2jpt2xe0xw8qjzv4xx4a
+bobkey=rkopub1addwnpepq2d9p6enp7xda79rqs6xlne7pxk28alcjzp8xj748lwrzd70l384s2xn7yz
+
+# bond provider
+arkeod tx arkeo bond-provider $alicekey btc-mainnet 200000000 --from alice -y
+
+# modify provider
+arkeod tx arkeo mod-provider $alicekey btc-mainnet "https://dev.arkeo.network/provider1/metadata.json" 36 1 30 365 10 20 --from alice -y
+
+
+# open paygo contract
+arkeod tx arkeo open-contract $alicekey btc-mainnet $bobkey 1 60 30 20 --from bob -y
+
+# open subscription contract
+arkeod tx arkeo open-contract $alicekey btc-mainnet $bobkey 0 300 30 10 --from bob -y

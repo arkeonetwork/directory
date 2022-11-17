@@ -70,7 +70,11 @@ func (a *IndexerApp) createProvider(evt types.BondProviderEvent) (*db.ArkeoProvi
 	if err != nil {
 		return nil, errors.Wrapf(err, "error inserting provider %s %s", evt.Pubkey, evt.Chain)
 	}
+	if entity == nil {
+		return nil, fmt.Errorf("nil entity after inserting provider")
+	}
 	log.Debugf("inserted provider record %d for %s %s", entity.ID, evt.Pubkey, evt.Chain)
+	provider.Entity = *entity
 	return provider, nil
 }
 

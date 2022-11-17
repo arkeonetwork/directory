@@ -1,11 +1,14 @@
 package indexer
 
 import (
+	"context"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	tmclient "github.com/tendermint/tendermint/rpc/client/http"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
@@ -13,6 +16,7 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 	blockEvents := subscribe(client, "tm.event = 'NewBlockHeader'")
 	bondProviderEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgBondProvider'")
 	modProviderEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgModProvider'")
+	openContractEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgOpenContract'")
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 
@@ -25,6 +29,10 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 				continue
 			}
 			log.Debugf("received block: %d", data.Header.Height)
+		case evt := <-openContractEvents:
+			log.Debugf("received open contract event: %#v", evt.Data)
+			converted := convertEvent("open_contract", evt.Events)
+			log.Infof("converted open_contract map: %#v", converted)
 		case evt := <-bondProviderEvents:
 			converted := convertEvent("provider_bond", evt.Events)
 			bondProviderEvent, err := parseBondProviderEvent(converted)
@@ -53,4 +61,28 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 			return nil
 		}
 	}
+}
+
+// TODO: if there are multiple of the same type of event, this may be
+// problematic, multiple events may get purged into one (not sure)
+func convertEvent(etype string, raw map[string][]string) map[string]string {
+	newEvt := make(map[string]string, 0)
+
+	for k, v := range raw {
+		if strings.HasPrefix(k, etype+".") {
+			parts := strings.SplitN(k, ".", 2)
+			newEvt[parts[1]] = v[0]
+		}
+	}
+
+	return newEvt
+}
+
+func subscribe(client *tmclient.HTTP, query string) <-chan ctypes.ResultEvent {
+	out, err := client.Subscribe(context.Background(), "", query)
+	if err != nil {
+		log.Errorf("failed to subscribe to query", "err", err, "query", query)
+		os.Exit(1)
+	}
+	return out
 }
