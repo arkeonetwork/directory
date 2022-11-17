@@ -117,8 +117,7 @@ func (a *ApiService) getProvider(w http.ResponseWriter, r *http.Request) {
 //	500: InternalServerError
 
 func (a *ApiService) searchProviders(response http.ResponseWriter, request *http.Request) {
-	// generate a params struct of strings to pass to a searchProviders(searchProviderParams) function
-	// for better testing...
+
 	sort := request.FormValue("sort")
 	maxDistanceInput := request.FormValue("maxDistance")
 	coordinatesInput := request.FormValue("coordinates")
@@ -127,80 +126,87 @@ func (a *ApiService) searchProviders(response http.ResponseWriter, request *http
 	minRateLimitInput := request.FormValue("min-rate-limit")
 	minOpenContractsInput := request.FormValue("min-open-contracts")
 
-	// do we want to allow this and just return an unsorted list of providers?
-	if sort == "" &&
-		maxDistanceInput == "" &&
-		coordinatesInput == "" &&
-		minValidatorPaymentsInput == "" &&
-		minProviderAgeInput == "" &&
-		minRateLimitInput == "" &&
-		minOpenContractsInput == "" {
-		respondWithError(response, http.StatusBadRequest, "must supply atleast one valid search parameter")
-		return
-	}
-
 	if maxDistanceInput != "" && coordinatesInput == "" || coordinatesInput != "" && maxDistanceInput == "" {
 		respondWithError(response, http.StatusBadRequest, "max distance must accompany coordinates when supplied")
 		return
 	}
 
-	// TODO: create enum for sort keys
-	var maxDistance int64
-	var coordinates types.Coordinates
-	if maxDistanceInput != "" {
-		var err error
-		maxDistance, err = strconv.ParseInt(maxDistanceInput, 10, 64)
-		if err != nil {
-			respondWithError(response, http.StatusBadRequest, "max distance can not be parse")
+	searchParams := types.ProviderSearchParams{}
+	if sort != "" {
+		switch sort {
+		case string(types.ProviderSortKeyAge):
+			searchParams.SortKey = types.ProviderSortKeyAge
+		case string(types.ProviderSortKeyAmountPaid):
+			searchParams.SortKey = types.ProviderSortKeyAmountPaid
+		case string(types.ProviderSortKeyContractCount):
+			searchParams.SortKey = types.ProviderSortKeyContractCount
+		default:
+			respondWithError(response, http.StatusBadRequest, "sort key can not be parsed")
 			return
 		}
-		coordinates, err = utils.ParseCoordinates(coordinatesInput)
+	}
+
+	// TODO: create enum for sort keys
+	if maxDistanceInput != "" {
+		var err error
+		maxDistance, err := strconv.ParseInt(maxDistanceInput, 10, 64)
+		if err != nil {
+			respondWithError(response, http.StatusBadRequest, "max distance can not be parsed")
+			return
+		}
+		coordinates, err := utils.ParseCoordinates(coordinatesInput)
 		if err != nil {
 			respondWithError(response, http.StatusBadRequest, "coordinates can not be parsed")
 			return
 		}
+		searchParams.IsMaxDistanceSet = true
+		searchParams.MaxDistance = maxDistance
+		searchParams.Coordinates = coordinates
 	}
 
-	var minValidatorPayments int64
 	if minValidatorPaymentsInput != "" {
 		var err error
-		minValidatorPayments, err = strconv.ParseInt(minValidatorPaymentsInput, 10, 64)
+		minValidatorPayments, err := strconv.ParseInt(minValidatorPaymentsInput, 10, 64)
 		if err != nil {
 			respondWithError(response, http.StatusBadRequest, "min-validator-payments can not be parsed")
 			return
 		}
+		searchParams.IsMinValidatorPaymentsSet = true
+		searchParams.MinValidatorPayments = minValidatorPayments
 	}
 
-	var minProviderAge int64
 	if minProviderAgeInput != "" {
 		var err error
-		minProviderAge, err = strconv.ParseInt(minProviderAgeInput, 10, 64)
+		minProviderAge, err := strconv.ParseInt(minProviderAgeInput, 10, 64)
 		if err != nil {
 			respondWithError(response, http.StatusBadRequest, "min-provider-age can not be parsed")
 			return
 		}
+		searchParams.MinProviderAge = minProviderAge
+		searchParams.IsMinProviderAgeSet = true
 	}
 
-	var minRateLimit int64
 	if minRateLimitInput != "" {
 		var err error
-		minRateLimit, err = strconv.ParseInt(minRateLimitInput, 10, 64)
+		minRateLimit, err := strconv.ParseInt(minRateLimitInput, 10, 64)
 		if err != nil {
 			respondWithError(response, http.StatusBadRequest, "min-rate-limit can not be parsed")
 			return
 		}
+		searchParams.IsMinRateLimitSet = true
+		searchParams.MinRateLimit = minRateLimit
 	}
 
-	var minOpenContracts int64
 	if minOpenContractsInput != "" {
 		var err error
-		minOpenContracts, err = strconv.ParseInt(minOpenContractsInput, 10, 64)
+		minOpenContracts, err := strconv.ParseInt(minOpenContractsInput, 10, 64)
 		if err != nil {
 			respondWithError(response, http.StatusBadRequest, "min-rate-limit can not be parsed")
 			return
 		}
+		searchParams.MinOpenContracts = minOpenContracts
+		searchParams.IsMinOpenContractsSet = true
 	}
-
 	respondWithJSON(response, http.StatusOK, ArkeoProviders{})
 }
 
