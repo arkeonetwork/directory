@@ -33,7 +33,18 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 			log.Debugf("received open contract event: %#v", evt.Data)
 			converted := convertEvent("open_contract", evt.Events)
 			log.Infof("converted open_contract map: %#v", converted)
+			openContractEvent, err := parseOpenContractEvent(converted)
+			if err != nil {
+				log.Errorf("error parsing openContractEvent: %+v", err)
+				continue
+			}
+			if err = a.handleOpenContractEvent(openContractEvent); err != nil {
+				log.Errorf("error handling provider bond event: %+v", err)
+				continue
+			}
 		case evt := <-bondProviderEvents:
+			x := evt.Data
+			_ = x
 			converted := convertEvent("provider_bond", evt.Events)
 			bondProviderEvent, err := parseBondProviderEvent(converted)
 			if err != nil {
@@ -67,6 +78,11 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 // problematic, multiple events may get purged into one (not sure)
 func convertEvent(etype string, raw map[string][]string) map[string]string {
 	newEvt := make(map[string]string, 0)
+	if txID, ok := raw["tx.hash"]; ok {
+		newEvt["txID"] = txID[0]
+	} else {
+		log.Warnf("no tx.hash in event attributes: %#v", raw)
+	}
 
 	for k, v := range raw {
 		if strings.HasPrefix(k, etype+".") {

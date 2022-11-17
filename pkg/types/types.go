@@ -5,8 +5,42 @@ import "math/big"
 type BondProviderEvent struct {
 	Pubkey       string
 	Chain        string
+	TxID         string
 	BondRelative *big.Int
 	BondAbsolute *big.Int
+}
+
+/*
+sdk.NewAttribute("pubkey", contract.ProviderPubKey.String()),
+
+	sdk.NewAttribute("chain", contract.Chain.String()),
+	sdk.NewAttribute("client", contract.Client.String()),
+	sdk.NewAttribute("delegate", contract.Delegate.String()),
+	sdk.NewAttribute("type", contract.Type.String()),
+	sdk.NewAttribute("height", strconv.FormatInt(contract.Height, 10)),
+	sdk.NewAttribute("duration", strconv.FormatInt(contract.Duration, 10)),
+	sdk.NewAttribute("rate", strconv.FormatInt(contract.Rate, 10)),
+	sdk.NewAttribute("open_cost", strconv.FormatInt(openCost, 10)),
+*/
+
+type ContractType string
+
+var (
+	ContractTypePayAsYouGo   ContractType = "PayAsYouGo"
+	ContractTypeSubscription ContractType = "Subscription"
+)
+
+type OpenContractEvent struct {
+	ProviderPubkey string
+	Chain          string
+	ClientPubkey   string
+	DelegatePubkey string
+	TxID           string
+	ContractType   ContractType
+	Height         int64
+	Duration       int64
+	Rate           int64
+	OpenCost       int64
 }
 
 type ProviderStatus string
@@ -19,6 +53,7 @@ var (
 type ModProviderEvent struct {
 	Pubkey              string
 	Chain               string
+	TxID                string
 	MetadataURI         string
 	MetadataNonce       uint64
 	Status              ProviderStatus

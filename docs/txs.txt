@@ -1,6 +1,6 @@
 
-alicekey=rkopub1addwnpepqv854fsqyc5nc09md5t0lj8dnm3zpghch3rrc9t2jpt2xe0xw8qjzv4xx4a
-bobkey=rkopub1addwnpepq2d9p6enp7xda79rqs6xlne7pxk28alcjzp8xj748lwrzd70l384s2xn7yz
+alicekey=arkeopub1addwnpepqd95ljmqk9lruf8lcu49dww8wx2zp22d7uv6u4xxauatpldfgk9zsffjjnl
+bobkey=arkeopub1addwnpepqvqnum7cvyc5h83kj2qtr9wsr85uj5n3w3mvddc8dwsjtcv3p3ary740k44
 
 # bond provider
 arkeod tx arkeo bond-provider $alicekey btc-mainnet 200000000 --from alice -y

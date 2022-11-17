@@ -8,8 +8,9 @@ create table provider_mod_events
     created               timestamptz default now() not null,
     updated               timestamptz default now() not null,
     provider_id           bigint                    not null references providers (id),
-    metadata_uri          text,
-    metadata_nonce        numeric,
+    txid                  text                      not null check ( txid != '' ),
+    metadata_uri          text check ( metadata_uri != '' ),
+    metadata_nonce        numeric check ( metadata_nonce >= 0 ),
     status                text references provider_status (status),
     min_contract_duration numeric,
     max_contract_duration numeric,
@@ -18,3 +19,4 @@ create table provider_mod_events
 );
 
 create index prov_mod_evts_prov_id_idx on provider_mod_events (provider_id);
+

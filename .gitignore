@@ -1,3 +1,4 @@
 .idea/
 .vscode/
 cmd/**/__debug_bin
+indexer/.DS_Store
