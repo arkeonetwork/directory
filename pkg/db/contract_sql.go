@@ -2,16 +2,17 @@ package db
 
 var (
 	sqlFindContract = `
-	select id,
-				 created,
-				 updated,
-				 provider_id,
-				 delegate_pubkey,
-				 client_pubkey,
-				 contract_type,
-				 duration,
-				 rate,
-				 open_cost
+	select
+	id,
+	created,
+	updated,
+	provider_id,
+	delegate_pubkey,
+	client_pubkey,
+	contract_type,
+	duration,
+	rate,
+	open_cost
 	from contracts c
 		where c.provider_id = $1
 		  and c.delegate_pubkey = $2

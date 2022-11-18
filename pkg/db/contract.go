@@ -17,25 +17,6 @@ type ArkeoContract struct {
 	OpenCost       int64              `db:"bond"`
 }
 
-/*
-func (d *DirectoryDB) FindProvider(pubkey string, chain string) (*ArkeoProvider, error) {
-	conn, err := d.getConnection()
-	defer conn.Release()
-	if err != nil {
-		return nil, errors.Wrapf(err, "error obtaining db connection")
-	}
-	provider := ArkeoProvider{}
-	if err = selectOne(conn, sqlFindProvider, &provider, pubkey, chain); err != nil {
-		return nil, errors.Wrapf(err, "error selecting")
-	}
-	// not found
-	if provider.Pubkey == "" {
-		return nil, nil
-	}
-	return &provider, nil
-}
-*/
-
 func (d *DirectoryDB) FindContract(providerID int64, delegatePubkey string) (*ArkeoContract, error) {
 	conn, err := d.getConnection()
 	defer conn.Release()

@@ -80,7 +80,6 @@ func (f *CustomLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	}
 
 	return []byte(
-		// fmt.Sprintf("%s %s \"%s\" [%s:%d]%s\n", timestamp, f.LevelDesc[entry.Level], entry.Message, fields, fileName, entry.Caller.Line),
 		fmt.Sprintf("%s %s \"%s%s\" [%s:%d]\n", timestamp, f.LevelDesc[entry.Level], entry.Message, fields, fileName, entry.Caller.Line),
 	), nil
 }

@@ -29,7 +29,6 @@ type IndexerApp struct {
 }
 
 func NewIndexer(params IndexerAppParams) *IndexerApp {
-	// configure()
 	d, err := db.New(params.DBConfig)
 	if err != nil {
 		panic(fmt.Sprintf("error connecting to the db: %+v", err))

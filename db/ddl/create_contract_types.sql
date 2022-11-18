@@ -8,5 +8,7 @@ create table contract_types
     val text   not null unique
 );
 
-insert into contract_types(val) values ('PayAsYouGo');
-insert into contract_types(val) values ('Subscription');
+insert into contract_types(val)
+values ('PayAsYouGo');
+insert into contract_types(val)
+values ('Subscription');

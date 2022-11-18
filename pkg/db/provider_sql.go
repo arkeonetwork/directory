@@ -20,19 +20,20 @@ var (
 		returning id, created, updated
 	`
 	sqlFindProvider = `
-		select id,
-					 created,
-					 updated,
-					 pubkey,
-					 chain,
-					 coalesce(bond,0) as bond,
-					 coalesce(metadata_uri,'') as metadata_uri,
-					 coalesce(metadata_nonce,0) as metadata_nonce,
-					 coalesce(status,'Offline') as status,
-					 coalesce(min_contract_duration,-1) as min_contract_duration,
-					 coalesce(max_contract_duration,-1) as max_contract_duration,
-					 coalesce(subscription_rate,-1) as subscription_rate,
-					 coalesce(paygo_rate,-1) as paygo_rate
+		select 
+			id,
+			created,
+			updated,
+			pubkey,
+			chain,
+			coalesce(bond,0) as bond,
+			coalesce(metadata_uri,'') as metadata_uri,
+			coalesce(metadata_nonce,0) as metadata_nonce,
+			coalesce(status,'Offline') as status,
+			coalesce(min_contract_duration,-1) as min_contract_duration,
+			coalesce(max_contract_duration,-1) as max_contract_duration,
+			coalesce(subscription_rate,-1) as subscription_rate,
+			coalesce(paygo_rate,-1) as paygo_rate
 		from providers p
 		where p.pubkey = $1
 		  and p.chain = $2
