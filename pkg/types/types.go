@@ -30,6 +30,19 @@ var (
 	ContractTypeSubscription ContractType = "Subscription"
 )
 
+// type Contract struct {
+// 	ProviderPubkey string
+// 	Chain          string
+// 	ClientPubkey   string
+// 	DelegatePubkey string
+// 	TxID           string
+// 	ContractType   ContractType
+// 	Height         int64
+// 	Duration       int64
+// 	Rate           int64
+// 	OpenCost       int64
+// }
+
 type OpenContractEvent struct {
 	ProviderPubkey string
 	Chain          string

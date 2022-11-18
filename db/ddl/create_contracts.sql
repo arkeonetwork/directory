@@ -10,14 +10,15 @@ create table contracts
     provider_id     bigint                    not null references providers (id),
     delegate_pubkey text                      not null check ( delegate_pubkey != '' ),
     client_pubkey   text                      not null check ( client_pubkey != '' ),
-    contract_type   text references contract_types (val),
+    height          bigint                    not null check ( height > 0 ),
+    contract_type   text                      not null references contract_types (val),
     duration        bigint                    not null,
     rate            bigint                    not null,
     open_cost       bigint                    not null
 );
 
 alter table contracts
-    add constraint pubkey_prov_deleg_uniq unique (provider_id, delegate_pubkey);
+    add constraint pubkey_prov_dlgt_uniq unique (provider_id, delegate_pubkey);
 
 -- may be good'nuf with unique constraint
 -- create index contracts_prov_id_idx on provider_mod_events (provider_id);

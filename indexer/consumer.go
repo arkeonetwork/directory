@@ -30,7 +30,7 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 			}
 			log.Debugf("received block: %d", data.Header.Height)
 		case evt := <-openContractEvents:
-			log.Debugf("received open contract event: %#v", evt.Data)
+			log.Debugf("received open contract event")
 			converted := convertEvent("open_contract", evt.Events)
 			log.Infof("converted open_contract map: %#v", converted)
 			openContractEvent, err := parseOpenContractEvent(converted)
@@ -39,7 +39,7 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 				continue
 			}
 			if err = a.handleOpenContractEvent(openContractEvent); err != nil {
-				log.Errorf("error handling provider bond event: %+v", err)
+				log.Errorf("error handling open contract event: %+v", err)
 				continue
 			}
 		case evt := <-bondProviderEvents:
