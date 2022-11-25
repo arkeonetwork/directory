@@ -5,8 +5,29 @@ import "math/big"
 type BondProviderEvent struct {
 	Pubkey       string
 	Chain        string
+	TxID         string
 	BondRelative *big.Int
 	BondAbsolute *big.Int
+}
+
+type ContractType string
+
+var (
+	ContractTypePayAsYouGo   ContractType = "PayAsYouGo"
+	ContractTypeSubscription ContractType = "Subscription"
+)
+
+type OpenContractEvent struct {
+	ProviderPubkey string
+	Chain          string
+	ClientPubkey   string
+	DelegatePubkey string
+	TxID           string
+	ContractType   ContractType
+	Height         int64
+	Duration       int64
+	Rate           int64
+	OpenCost       int64
 }
 
 type ProviderStatus string
@@ -19,6 +40,7 @@ var (
 type ModProviderEvent struct {
 	Pubkey              string
 	Chain               string
+	TxID                string
 	MetadataURI         string
 	MetadataNonce       uint64
 	Status              ProviderStatus

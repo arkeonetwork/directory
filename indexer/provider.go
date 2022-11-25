@@ -70,7 +70,11 @@ func (a *IndexerApp) createProvider(evt types.BondProviderEvent) (*db.ArkeoProvi
 	if err != nil {
 		return nil, errors.Wrapf(err, "error inserting provider %s %s", evt.Pubkey, evt.Chain)
 	}
+	if entity == nil {
+		return nil, fmt.Errorf("nil entity after inserting provider")
+	}
 	log.Debugf("inserted provider record %d for %s %s", entity.ID, evt.Pubkey, evt.Chain)
+	provider.Entity = *entity
 	return provider, nil
 }
 
@@ -106,6 +110,8 @@ func parseBondProviderEvent(input map[string]string) (types.BondProviderEvent, e
 				return evt, fmt.Errorf("invalid chain %s", v)
 			}
 			evt.Chain = v
+		case "txID":
+			evt.TxID = v
 		case "bond_rel":
 			evt.BondRelative, ok = new(big.Int).SetString(v, 10)
 			if !ok {
@@ -136,6 +142,8 @@ func parseModProviderEvent(input map[string]string) (types.ModProviderEvent, err
 				return evt, fmt.Errorf("invalid chain %s", v)
 			}
 			evt.Chain = v
+		case "txID":
+			evt.TxID = v
 		case "metadata_uri":
 			if ok = validateMetadataURI(v); !ok {
 				return evt, fmt.Errorf("invalid metadata_uri %s", v)

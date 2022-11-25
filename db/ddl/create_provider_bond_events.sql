@@ -8,6 +8,7 @@ create table provider_bond_events
     created     timestamptz default now() not null,
     updated     timestamptz default now() not null,
     provider_id bigint                    not null references providers (id),
+    txid        text                      not null check ( txid != '' ),
     bond_rel    numeric                   not null,
     bond_abs    numeric                   not null
 );

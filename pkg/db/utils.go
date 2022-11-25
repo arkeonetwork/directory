@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/georgysavva/scany/pgxscan"
@@ -51,4 +52,27 @@ func selectOne(conn *pgxpool.Conn, sql string, target interface{}, params ...int
 		return errors.Wrapf(err, "error selecting with params: %v", params)
 	}
 	return nil
+}
+
+func upsert(conn *pgxpool.Conn, sql string, params ...interface{}) (*Entity, error) {
+	row := conn.QueryRow(context.Background(), sql, params...)
+
+	var (
+		id      int64
+		created time.Time
+		updated time.Time
+		err     error
+	)
+
+	if err = row.Scan(&id, &created, &updated); err != nil {
+		return nil, fmt.Errorf("error upserting: %+v", err)
+	}
+
+	entity := &Entity{
+		ID:      id,
+		Created: created,
+		Updated: updated,
+	}
+
+	return entity, nil
 }

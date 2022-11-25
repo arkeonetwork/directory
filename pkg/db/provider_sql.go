@@ -20,27 +20,29 @@ var (
 		returning id, created, updated
 	`
 	sqlFindProvider = `
-		select id,
-					 created,
-					 updated,
-					 pubkey,
-					 chain,
-					 bond,
-					 metadata_uri,
-					 metadata_nonce,
-					 status,
-					 min_contract_duration,
-					 max_contract_duration,
-					 subscription_rate,
-					 paygo_rate
+		select 
+			id,
+			created,
+			updated,
+			pubkey,
+			chain,
+			coalesce(bond,0) as bond,
+			coalesce(metadata_uri,'') as metadata_uri,
+			coalesce(metadata_nonce,0) as metadata_nonce,
+			coalesce(status,'Offline') as status,
+			coalesce(min_contract_duration,-1) as min_contract_duration,
+			coalesce(max_contract_duration,-1) as max_contract_duration,
+			coalesce(subscription_rate,-1) as subscription_rate,
+			coalesce(paygo_rate,-1) as paygo_rate
 		from providers p
 		where p.pubkey = $1
 		  and p.chain = $2
 	`
 	sqlInsertBondProviderEvent = `
-		insert into provider_bond_events(provider_id,bond_rel,bond_abs) values ($1,$2,$3) returning id, created, updated
+		insert into provider_bond_events(provider_id,txid,bond_rel,bond_abs) values ($1,$2,$3,$4) returning id, created, updated
 	`
 	sqlInsertModProviderEvent = `
-		insert into provider_mod_events(provider_id,metadata_uri,metadata_nonce,status,min_contract_duration,max_contract_duration,subscription_rate,paygo_rate) values ($1,$2,$3,$4,$5,$6,$7,$8) returning id, created, updated
+		insert into provider_mod_events(provider_id,txid,metadata_uri,metadata_nonce,status,min_contract_duration,max_contract_duration,subscription_rate,paygo_rate)
+		values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id, created, updated
 	`
 )
