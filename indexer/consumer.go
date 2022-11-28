@@ -43,8 +43,6 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 				continue
 			}
 		case evt := <-bondProviderEvents:
-			x := evt.Data
-			_ = x
 			converted := convertEvent("provider_bond", evt.Events)
 			bondProviderEvent, err := parseBondProviderEvent(converted)
 			if err != nil {
