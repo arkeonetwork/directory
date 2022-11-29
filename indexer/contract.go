@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/ArkeoNetwork/directory/pkg/types"
+	"github.com/ArkeoNetwork/directory/pkg/utils"
 	"github.com/pkg/errors"
 )
 
@@ -38,7 +39,7 @@ func parseOpenContractEvent(input map[string]string) (types.OpenContractEvent, e
 		case "pubkey":
 			evt.ProviderPubkey = v
 		case "chain":
-			if ok = validateChain(v); !ok {
+			if ok = utils.ValidateChain(v); !ok {
 				return evt, fmt.Errorf("invalid chain %s", v)
 			}
 			evt.Chain = v

@@ -8,6 +8,7 @@ import (
 
 	"github.com/ArkeoNetwork/directory/pkg/db"
 	"github.com/ArkeoNetwork/directory/pkg/types"
+	"github.com/ArkeoNetwork/directory/pkg/utils"
 	"github.com/pkg/errors"
 )
 
@@ -106,7 +107,7 @@ func parseBondProviderEvent(input map[string]string) (types.BondProviderEvent, e
 		case "pubkey":
 			evt.Pubkey = v
 		case "chain":
-			if ok = validateChain(v); !ok {
+			if ok = utils.ValidateChain(v); !ok {
 				return evt, fmt.Errorf("invalid chain %s", v)
 			}
 			evt.Chain = v
@@ -138,7 +139,7 @@ func parseModProviderEvent(input map[string]string) (types.ModProviderEvent, err
 		case "pubkey":
 			evt.Pubkey = v
 		case "chain":
-			if ok = validateChain(v); !ok {
+			if ok = utils.ValidateChain(v); !ok {
 				return evt, fmt.Errorf("invalid chain %s", v)
 			}
 			evt.Chain = v

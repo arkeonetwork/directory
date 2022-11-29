@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/ArkeoNetwork/directory/pkg/db"
 	"github.com/ArkeoNetwork/directory/pkg/types"
 	"github.com/ArkeoNetwork/directory/pkg/utils"
 	"github.com/gorilla/mux"
@@ -12,9 +13,9 @@ import (
 )
 
 // swagger:model ArkeoProvider
-type ArkeoProvider struct {
-	Pubkey string
-}
+// type ArkeoProvider2 struct {
+// 	Pubkey string
+// }
 
 // Contains info about a 500 Internal Server Error response
 // swagger:model InternalServerError
@@ -23,7 +24,7 @@ type InternalServerError struct {
 }
 
 // swagger:model ArkeoProviders
-type ArkeoProviders []*ArkeoProvider
+type ArkeoProviders []*db.ArkeoProvider
 
 // swagger:route Get /provider/{pubkey} getProvider
 //
@@ -74,6 +75,18 @@ func (a *ApiService) getProvider(w http.ResponseWriter, r *http.Request) {
 // queries the service for a list of providers
 //
 // Parameters:
+//   + name: chain
+//     in: query
+//     description: chain provider services
+//     required: false
+//     schema:
+//      type: string
+//   + name: pubkey
+//     in: query
+//     description: pubkey of provider
+//     required: false
+//     schema:
+//      type: string
 //   + name: sort
 //     in: query
 //     description: defines how to sort the list of providers
@@ -119,6 +132,8 @@ func (a *ApiService) getProvider(w http.ResponseWriter, r *http.Request) {
 func (a *ApiService) searchProviders(response http.ResponseWriter, request *http.Request) {
 
 	sort := request.FormValue("sort")
+	chain := request.FormValue("chain")
+	pubkey := request.FormValue("pubkey")
 	maxDistanceInput := request.FormValue("maxDistance")
 	coordinatesInput := request.FormValue("coordinates")
 	minValidatorPaymentsInput := request.FormValue("min-validator-payments")
@@ -145,6 +160,13 @@ func (a *ApiService) searchProviders(response http.ResponseWriter, request *http
 			return
 		}
 	}
+
+	searchParams.Pubkey = pubkey
+
+	if chain != "" && !utils.ValidateChain(chain) {
+		respondWithError(response, http.StatusBadRequest, fmt.Sprintf("%s is not a valid chain", chain))
+	}
+	searchParams.Chain = chain
 
 	if maxDistanceInput != "" {
 		var err error
@@ -206,11 +228,17 @@ func (a *ApiService) searchProviders(response http.ResponseWriter, request *http
 		searchParams.MinOpenContracts = minOpenContracts
 		searchParams.IsMinOpenContractsSet = true
 	}
-	respondWithJSON(response, http.StatusOK, ArkeoProviders{})
+	results, err := a.db.SearchProviders(searchParams)
+	if err != nil {
+		log.Errorf("error searching providers: %+v", err)
+		respondWithError(response, http.StatusInternalServerError, "error searching providers")
+	}
+
+	respondWithJSON(response, http.StatusOK, results)
 }
 
-// just returns provider w/ passed pubkey
-func (a *ApiService) findProvider(pubkey, chain string) (*ArkeoProvider, error) {
+// find a provider by pubkey+chain
+func (a *ApiService) findProvider(pubkey, chain string) (*db.ArkeoProvider, error) {
 	dbProvider, err := a.db.FindProvider(pubkey, chain)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error finding provider for %s %s", pubkey, chain)
@@ -218,6 +246,7 @@ func (a *ApiService) findProvider(pubkey, chain string) (*ArkeoProvider, error) 
 	if dbProvider == nil {
 		return nil, nil
 	}
-	provider := &ArkeoProvider{Pubkey: dbProvider.Pubkey}
-	return provider, nil
+
+	// provider := &db.ArkeoProvider{Pubkey: dbProvider.Pubkey}
+	return dbProvider, nil
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/georgysavva/scany/pgxscan"
+	"github.com/huandu/go-sqlbuilder"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pkg/errors"
 )
@@ -54,6 +55,14 @@ func selectOne(conn *pgxpool.Conn, sql string, target interface{}, params ...int
 	return nil
 }
 
+func selectMany(conn *pgxpool.Conn, sql string, params ...interface{}) ([]map[string]interface{}, error) {
+	results := make([]map[string]interface{}, 0, 512)
+	if err := pgxscan.Select(context.Background(), conn, &results, sql, params...); err != nil {
+		return nil, errors.Wrapf(err, "error selecting many")
+	}
+	return results, nil
+}
+
 func upsert(conn *pgxpool.Conn, sql string, params ...interface{}) (*Entity, error) {
 	row := conn.QueryRow(context.Background(), sql, params...)
 
@@ -75,4 +84,8 @@ func upsert(conn *pgxpool.Conn, sql string, params ...interface{}) (*Entity, err
 	}
 
 	return entity, nil
+}
+
+func getFlavor() sqlbuilder.Flavor {
+	return sqlbuilder.PostgreSQL
 }

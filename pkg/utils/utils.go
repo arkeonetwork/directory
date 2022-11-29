@@ -31,3 +31,11 @@ func ParseCoordinates(coordinates string) (types.Coordinates, error) {
 func IsNearEqual(a float64, b float64, epsilon float64) bool {
 	return math.Abs(a-b) <= epsilon
 }
+
+// see arkeo-protocol/common/chain.go
+var validChains = map[string]struct{}{"arkeo-mainnet-fullnode": {}, "btc-mainnet-fullnode": {}, "eth-mainnet-fullnode": {}, "swapi.dev": {}}
+
+func ValidateChain(chain string) (ok bool) {
+	_, ok = validChains[chain]
+	return
+}

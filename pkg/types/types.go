@@ -64,6 +64,8 @@ var (
 )
 
 type ProviderSearchParams struct {
+	Pubkey                    string
+	Chain                     string
 	SortKey                   ProviderSortKey
 	MaxDistance               int64
 	IsMaxDistanceSet          bool
