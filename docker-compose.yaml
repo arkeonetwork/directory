@@ -21,7 +21,7 @@ services:
 
   arkeo-protocol:
     container_name: arkeo-protocol
-    image: arkeo-protocol:latest
+    image: ghcr.io/arkeonetwork/arkeo:latest
     environment:
       - ARKEOD_RPC_LADDR=tcp://0.0.0.0:26657
     networks:
@@ -38,7 +38,6 @@ services:
       - docker/dev/docker.env
     depends_on:
       - postgres
-      - arkeo-protocol
     networks:
       - arkeo
 
