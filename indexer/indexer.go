@@ -60,11 +60,3 @@ func (a *IndexerApp) start() {
 	a.consumeEvents(client)
 	a.done <- struct{}{}
 }
-
-// see arkeo-protocol/common/chain.go
-var validChains = map[string]struct{}{"arkeo-mainnet-fullnode": {}, "btc-mainnet-fullnode": {}, "eth-mainnet-fullnode": {}, "swapi.dev": {}}
-
-func validateChain(chain string) (ok bool) {
-	_, ok = validChains[chain]
-	return
-}

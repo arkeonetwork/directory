@@ -1,9 +1,12 @@
 package db
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ArkeoNetwork/directory/pkg/types"
+	"github.com/georgysavva/scany/pgxscan"
+	"github.com/huandu/go-sqlbuilder"
 	"github.com/pkg/errors"
 )
 
@@ -75,6 +78,37 @@ func (d *DirectoryDB) FindProvider(pubkey string, chain string) (*ArkeoProvider,
 		return nil, nil
 	}
 	return &provider, nil
+}
+
+func (d *DirectoryDB) SearchProviders(criteria types.ProviderSearchParams) ([]*ArkeoProvider, error) {
+	conn, err := d.getConnection()
+	defer conn.Release()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error obtaining db connection")
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+
+	sb.Select("id", "created", "pubkey", "chain", "status", "metadata_uri", "metadata_nonce",
+		"subscription_rate", "paygo_rate", "min_contract_duration", "max_contract_duration", "bond").
+		From("providers")
+
+	if criteria.Pubkey != "" {
+		sb = sb.Where(sb.Equal("pubkey", criteria.Pubkey))
+	}
+	if criteria.Chain != "" {
+		sb = sb.Where(sb.Equal("chain", criteria.Chain))
+	}
+
+	sql, params := sb.BuildWithFlavor(getFlavor())
+	log.Debugf("sql: %s\n%v", sql, params)
+
+	providers := make([]*ArkeoProvider, 0, 512)
+	if err := pgxscan.Select(context.Background(), conn, &providers, sql, params...); err != nil {
+		return nil, errors.Wrapf(err, "error selecting many")
+	}
+
+	return providers, nil
 }
 
 func (d *DirectoryDB) InsertBondProviderEvent(providerID int64, evt types.BondProviderEvent) (*Entity, error) {
