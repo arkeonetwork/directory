@@ -82,7 +82,8 @@ func (a *IndexerApp) start() {
 	}
 	log.Infof("Starting historical syncing from block height: %d", a.Height)
 	// unsure how to deal with syncronization here. Ideally we kick off new thread to background historical sync
-	// while we keep consuming events that are coming in real time.
+	// while we keep consuming events that are coming in real time. Currently we run the risk of missing
+	// some events in the transition from historical to real time.
 	a.consumeHistoricalEvents(client)
 	a.IsSynced = true
 	a.consumeEvents(client)

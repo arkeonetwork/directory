@@ -7,6 +7,8 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/pkg/errors"
+
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	tmclient "github.com/tendermint/tendermint/rpc/client/http"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -35,38 +37,13 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 			log.Debugf("received open contract event")
 			converted := convertWebSocketEvent("open_contract", evt.Events)
 			log.Infof("converted open_contract map: %#v", converted)
-			openContractEvent, err := parseOpenContractEvent(converted)
-			if err != nil {
-				log.Errorf("error parsing openContractEvent: %+v", err)
-				continue
-			}
-			if err = a.handleOpenContractEvent(openContractEvent); err != nil {
-				log.Errorf("error handling open contract event: %+v", err)
-				continue
-			}
+			handleOpenContractEvent(a, &converted)
 		case evt := <-bondProviderEvents:
 			converted := convertWebSocketEvent("provider_bond", evt.Events)
-			bondProviderEvent, err := parseBondProviderEvent(converted)
-			if err != nil {
-				log.Errorf("error parsing bondProviderEvent: %+v", err)
-				continue
-			}
-			if err = a.handleBondProviderEvent(bondProviderEvent); err != nil {
-				log.Errorf("error handling provider bond event: %+v", err)
-				continue
-			}
+			handleBondProviderEvent(a, &converted)
 		case evt := <-modProviderEvents:
 			converted := convertWebSocketEvent("provider_mod", evt.Events)
-			modProviderEvent, err := parseModProviderEvent(converted)
-			if err != nil {
-				log.Errorf("error parsing modProviderEvent: %+v", err)
-				continue
-			}
-			if err = a.handleModProviderEvent(modProviderEvent); err != nil {
-				log.Errorf("error storing provider bond event: %+v", err)
-				continue
-			}
-			log.Infof("providerModEvent: %#v", modProviderEvent)
+			handleModProviderEvent(a, &converted)
 		case <-quit:
 			log.Infof("received os quit signal")
 			return nil
@@ -99,6 +76,7 @@ func convertHistoricalEvent(event abcitypes.Event) map[string]string {
 	for _, attr := range event.Attributes {
 		newEvt[string(attr.Key)] = string(attr.Value)
 	}
+	newEvt["txID"] = "none" // DELETEME once / if we remove tx id from tables
 	return newEvt
 }
 
@@ -111,38 +89,86 @@ func subscribe(client *tmclient.HTTP, query string) <-chan ctypes.ResultEvent {
 	return out
 }
 
+func handleBondProviderEvent(a *IndexerApp, convertedEvent *map[string]string) {
+	bondProviderEvent, err := parseBondProviderEvent(*convertedEvent)
+	if err != nil {
+		log.Errorf("error parsing bondProviderEvent: %+v", err)
+		return
+	}
+	if err = a.handleBondProviderEvent(bondProviderEvent); err != nil {
+		log.Errorf("error handling provider bond event: %+v", err)
+		return
+	}
+}
+
+func handleOpenContractEvent(a *IndexerApp, convertedEvent *map[string]string) {
+	openContractEvent, err := parseOpenContractEvent(*convertedEvent)
+	if err != nil {
+		log.Errorf("error parsing openContractEvent: %+v", err)
+		return
+	}
+	if err = a.handleOpenContractEvent(openContractEvent); err != nil {
+		log.Errorf("error handling open contract event: %+v", err)
+		return
+	}
+}
+
+func handleModProviderEvent(a *IndexerApp, convertedEvent *map[string]string) {
+	modProviderEvent, err := parseModProviderEvent(*convertedEvent)
+	if err != nil {
+		log.Errorf("error parsing modProviderEvent: %+v", err)
+		return
+	}
+	if err = a.handleModProviderEvent(modProviderEvent); err != nil {
+		log.Errorf("error storing provider bond event: %+v", err)
+		return
+	}
+	log.Infof("providerModEvent: %#v", modProviderEvent)
+}
+
 func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 	var currentBlock *ctypes.ResultBlock
 	currentBlock, err := client.Block(context.Background(), nil)
 	if err != nil {
-		// how to handle this?
-		return err
+		return errors.Wrap(err, "error getting current block")
 	}
 	log.Infof("Current block %d, syncing from block %d", currentBlock.Block.Height, a.Height)
-
+	retries := 10
 	for currentBlock.Block.Height > int64(a.Height) {
-		currentHeight := int64(a.Height)
-		nextBlock, err := client.BlockResults(context.Background(), &currentHeight)
+		nextHeight := int64(a.Height)
+		nextBlock, err := client.BlockResults(context.Background(), &nextHeight)
+		if err != nil {
+			retries = retries - 1
+			log.Warnf("Getting next block results at height: %d failed, will retry %d more times", nextHeight, retries)
+			if retries == 0 {
+				log.Errorf("Getting next block results at height: %d failed with no additional retries", nextHeight)
+				return errors.Wrapf(err, "error getting block results at height: %d", nextHeight)
+			}
+			continue
+		}
+
 		for _, result := range nextBlock.TxsResults {
 			for _, event := range result.Events {
 				switch event.Type {
 				case "open_contract":
+					convertedEvent := convertHistoricalEvent(event)
+					handleOpenContractEvent(a, &convertedEvent)
 				case "provider_bond":
 					convertedEvent := convertHistoricalEvent(event)
-					// currently stuck here trying to figure out how to get the transaction hash
-					parseBondProviderEvent(convertedEvent)
+					handleBondProviderEvent(a, &convertedEvent)
 				case "provider_mod":
+					convertedEvent := convertHistoricalEvent(event)
+					handleModProviderEvent(a, &convertedEvent)
 				}
 			}
 		}
 
 		a.Height = a.Height + 1
 		if currentBlock.Block.Height == int64(a.Height) {
-			// we should update to see if new blocks are available.
+			// we should update to see if new blocks have become available while we were processing
 			currentBlock, err = client.Block(context.Background(), nil)
 			if err != nil {
-				// how to handle this?
-				return err
+				return errors.Wrap(err, "error getting current block")
 			}
 		}
 	}
