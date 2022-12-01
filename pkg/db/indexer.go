@@ -2,12 +2,13 @@ package db
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/pkg/errors"
 )
 
 type IndexerStatus struct {
-	ID     string `db:"id"`
+	ID     int64  `db:"id"`
 	Height uint64 `db:"height"`
 }
 
@@ -41,18 +42,18 @@ func (d *DirectoryDB) UpdateIndexerStatus(indexerStatus *IndexerStatus) (*Entity
 	)
 }
 
-func (d *DirectoryDB) FindIndexerStatus(id string) (*IndexerStatus, error) {
+func (d *DirectoryDB) FindIndexerStatus(id int64) (*IndexerStatus, error) {
 	conn, err := d.getConnection()
 	defer conn.Release()
 	if err != nil {
 		return nil, errors.Wrapf(err, "error obtaining db connection")
 	}
-	indexerStatus := IndexerStatus{}
+	indexerStatus := IndexerStatus{Height: math.MaxUint64} // used to designate not found... need a better way!
 	if err = selectOne(conn, sqlFindIndexerStatus, &indexerStatus, id); err != nil {
 		return nil, errors.Wrapf(err, "error selecting")
 	}
 	// not found
-	if indexerStatus.ID == "" {
+	if indexerStatus.Height == math.MaxUint64 {
 		return nil, nil
 	}
 	return &indexerStatus, nil

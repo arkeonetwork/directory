@@ -11,7 +11,7 @@ func TestInsertIndexerStatus(t *testing.T) {
 	}
 
 	entity, err := db.InsertIndexerStatus(&IndexerStatus{
-		ID:     "0",
+		ID:     0,
 		Height: 55,
 	})
 
@@ -29,7 +29,7 @@ func TestUpdateIndexerStatus(t *testing.T) {
 	}
 
 	entity, err := db.UpdateIndexerStatus(&IndexerStatus{
-		ID:     "0",
+		ID:     0,
 		Height: 65,
 	})
 
@@ -46,7 +46,8 @@ func TestFindIndexerStatus(t *testing.T) {
 		t.Errorf("error getting db: %+v", err)
 	}
 
-	id := "0"
+	var id int64
+	id = 0
 	indexerStatus, err := db.FindIndexerStatus(id)
 	if err != nil {
 		t.Errorf("error finding indexer status: %+v", err)
@@ -54,7 +55,7 @@ func TestFindIndexerStatus(t *testing.T) {
 	}
 	log.Infof("found indexer status %d", indexerStatus.ID)
 
-	id = "nosuchthing"
+	id = 555556
 	indexerStatus, err = db.FindIndexerStatus(id)
 	if err != nil {
 		t.Errorf("error finding provider: %+v", err)
