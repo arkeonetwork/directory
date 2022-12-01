@@ -6,6 +6,7 @@ import (
 
 	"github.com/ArkeoNetwork/directory/pkg/db"
 	"github.com/ArkeoNetwork/directory/pkg/logging"
+	"github.com/pkg/errors"
 	tmlog "github.com/tendermint/tendermint/libs/log"
 	tmclient "github.com/tendermint/tendermint/rpc/client/http"
 )
@@ -60,9 +61,7 @@ func (a *IndexerApp) start() {
 		panic(fmt.Sprintf("error starting client: %+v", err))
 	}
 	defer client.Stop()
-
 	// determine last seen block from db
-
 	indexerStatus, err := a.db.FindIndexerStatus(a.params.IndexerID)
 	if err != nil {
 		panic(fmt.Sprintf("error getting indexer state from db: %+v", err))
@@ -73,9 +72,36 @@ func (a *IndexerApp) start() {
 		// this is the first time we have started the indexer wit this db, sync from heigh of 0
 		a.Height = 0
 	} else {
-		a.Height = indexerStatus.Height
+		// we have existing records, roll back 60 blocks on startup to ensure we have not missed any events due to crashing, etc.
+		var rollbackBlocks uint64 = 60
+		if indexerStatus.Height > rollbackBlocks {
+			a.Height = indexerStatus.Height - rollbackBlocks
+		} else {
+			a.Height = 0
+		}
 	}
-
+	log.Infof("Starting historical syncing from block height: %d", a.Height)
+	// unsure how to deal with syncronization here. Ideally we kick off new thread to background historical sync
+	// while we keep consuming events that are coming in real time.
+	a.consumeHistoricalEvents(client)
+	a.IsSynced = true
 	a.consumeEvents(client)
 	a.done <- struct{}{}
+}
+
+func (a *IndexerApp) handleBlockEvent(height int64) error {
+	if !a.IsSynced {
+		return nil // when we are syncing we don't want to update the DB until we are fully up to date.
+	}
+
+	indexerStatus := db.IndexerStatus{
+		ID:     a.params.IndexerID,
+		Height: uint64(height),
+	}
+	_, err := a.db.UpdateIndexerStatus(&indexerStatus)
+	if err != nil {
+		return errors.Wrapf(err, "error updating indexer status for %d height %d", indexerStatus.ID, indexerStatus.Height)
+	}
+	a.Height = uint64(height)
+	return nil
 }
