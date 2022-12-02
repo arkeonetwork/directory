@@ -91,8 +91,7 @@ func (a *IndexerApp) start() {
 		if err != nil {
 			log.Infof("Historical syncing failed")
 			complete <- false
-			// should we PANIC here?
-			return
+			panic(fmt.Sprintf("Historical syncing failed: %+v", err))
 		}
 		log.Infof("Historical syncing completed")
 		a.IsSynced.Store(true)

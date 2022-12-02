@@ -51,6 +51,63 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 	}
 }
 
+func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
+	var currentBlock *ctypes.ResultBlock
+	currentBlock, err := client.Block(context.Background(), nil)
+	if err != nil {
+		return errors.Wrap(err, "error getting current block")
+	}
+	blocksToSync := currentBlock.Block.Height - int64(a.Height)
+	log.Infof("Current block %d, syncing from block %d. %d blocks to go", currentBlock.Block.Height, a.Height, blocksToSync)
+	retries := 10
+	blocksSynced := 0
+	for currentBlock.Block.Height > int64(a.Height) {
+		nextHeight := int64(a.Height)
+		nextBlock, err := client.BlockResults(context.Background(), &nextHeight)
+		if err != nil {
+			retries = retries - 1
+			log.Warnf("Getting next block results at height: %d failed, will retry %d more times", nextHeight, retries)
+			if retries == 0 {
+				log.Errorf("Getting next block results at height: %d failed with no additional retries", nextHeight)
+				return errors.Wrapf(err, "error getting block results at height: %d", nextHeight)
+			}
+			continue
+		}
+
+		for _, result := range nextBlock.TxsResults {
+			for _, event := range result.Events {
+				switch event.Type {
+				case "open_contract":
+					convertedEvent := convertHistoricalEvent(event)
+					handleOpenContractEvent(a, &convertedEvent)
+				case "provider_bond":
+					convertedEvent := convertHistoricalEvent(event)
+					handleBondProviderEvent(a, &convertedEvent)
+				case "provider_mod":
+					convertedEvent := convertHistoricalEvent(event)
+					handleModProviderEvent(a, &convertedEvent)
+				}
+			}
+		}
+		blocksSynced++
+		if blocksSynced%500 == 0 {
+			log.Debugf("synced %d of initial %d", blocksSynced, blocksToSync)
+		}
+
+		a.Height++
+		if currentBlock.Block.Height == int64(a.Height) {
+			// we should update to see if new blocks have become available while we were processing
+			currentBlock, err = client.Block(context.Background(), nil)
+			if err != nil {
+				return errors.Wrap(err, "error getting current block")
+			}
+			blocksToSync = currentBlock.Block.Height - int64(a.Height)
+			blocksSynced = 0
+		}
+	}
+	return nil
+}
+
 // TODO: if there are multiple of the same type of event, this may be
 // problematic, multiple events may get purged into one (not sure)
 func convertWebSocketEvent(etype string, raw map[string][]string) map[string]string {
@@ -124,61 +181,4 @@ func handleModProviderEvent(a *IndexerApp, convertedEvent *map[string]string) {
 		return
 	}
 	log.Infof("providerModEvent: %#v", modProviderEvent)
-}
-
-func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
-	var currentBlock *ctypes.ResultBlock
-	currentBlock, err := client.Block(context.Background(), nil)
-	if err != nil {
-		return errors.Wrap(err, "error getting current block")
-	}
-	blocksToSync := currentBlock.Block.Height - int64(a.Height)
-	log.Infof("Current block %d, syncing from block %d. %d blocks to go", currentBlock.Block.Height, a.Height, blocksToSync)
-	retries := 10
-	blocksSynced := 0
-	for currentBlock.Block.Height > int64(a.Height) {
-		nextHeight := int64(a.Height)
-		nextBlock, err := client.BlockResults(context.Background(), &nextHeight)
-		if err != nil {
-			retries = retries - 1
-			log.Warnf("Getting next block results at height: %d failed, will retry %d more times", nextHeight, retries)
-			if retries == 0 {
-				log.Errorf("Getting next block results at height: %d failed with no additional retries", nextHeight)
-				return errors.Wrapf(err, "error getting block results at height: %d", nextHeight)
-			}
-			continue
-		}
-
-		for _, result := range nextBlock.TxsResults {
-			for _, event := range result.Events {
-				switch event.Type {
-				case "open_contract":
-					convertedEvent := convertHistoricalEvent(event)
-					handleOpenContractEvent(a, &convertedEvent)
-				case "provider_bond":
-					convertedEvent := convertHistoricalEvent(event)
-					handleBondProviderEvent(a, &convertedEvent)
-				case "provider_mod":
-					convertedEvent := convertHistoricalEvent(event)
-					handleModProviderEvent(a, &convertedEvent)
-				}
-			}
-		}
-		blocksSynced++
-		if blocksSynced%500 == 0 {
-			log.Debugf("synced %d of initial %d", blocksSynced, blocksToSync)
-		}
-
-		a.Height++
-		if currentBlock.Block.Height == int64(a.Height) {
-			// we should update to see if new blocks have become available while we were processing
-			currentBlock, err = client.Block(context.Background(), nil)
-			if err != nil {
-				return errors.Wrap(err, "error getting current block")
-			}
-			blocksToSync = currentBlock.Block.Height - int64(a.Height)
-			blocksSynced = 0
-		}
-	}
-	return nil
 }
