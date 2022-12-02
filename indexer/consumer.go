@@ -2,6 +2,7 @@ package indexer
 
 import (
 	"context"
+	"encoding/hex"
 	"os"
 	"os/signal"
 	"strings"
@@ -84,13 +85,14 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 			for _, event := range txInfo.TxResult.Events {
 				switch event.Type {
 				case "open_contract":
-					convertedEvent := convertHistoricalEvent(event, string(transaction.Hash()))
+
+					convertedEvent := convertHistoricalEvent(event, hex.EncodeToString(transaction.Hash()[:]))
 					handleOpenContractEvent(a, &convertedEvent)
 				case "provider_bond":
-					convertedEvent := convertHistoricalEvent(event, string(transaction.Hash()))
+					convertedEvent := convertHistoricalEvent(event, hex.EncodeToString(transaction.Hash()[:]))
 					handleBondProviderEvent(a, &convertedEvent)
 				case "provider_mod":
-					convertedEvent := convertHistoricalEvent(event, string(transaction.Hash()))
+					convertedEvent := convertHistoricalEvent(event, hex.EncodeToString(transaction.Hash()[:]))
 					handleModProviderEvent(a, &convertedEvent)
 				}
 			}
