@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/ArkeoNetwork/directory/pkg/sentinel"
 	"github.com/ArkeoNetwork/directory/pkg/types"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/huandu/go-sqlbuilder"
@@ -136,4 +137,17 @@ func (d *DirectoryDB) InsertModProviderEvent(providerID int64, evt types.ModProv
 
 	return insert(conn, sqlInsertModProviderEvent, providerID, evt.TxID, evt.MetadataURI, evt.MetadataNonce, evt.Status,
 		evt.MinContractDuration, evt.MaxContractDuration, evt.SubscriptionRate, evt.PayAsYouGoRate)
+}
+
+func (d *DirectoryDB) UpsertProviderMetadata(providerID int64, data sentinel.Metadata) (*Entity, error) {
+	conn, err := d.getConnection()
+	defer conn.Release()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error obtaining db connection")
+	}
+
+	c := data.Configuration
+	return upsert(conn, sqlUpsertProviderMetadata, providerID, data.Version, c.Moniker, c.Website, c.Description, c.Location,
+		c.Port, c.ProxyHost, c.SourceChain, c.EventStreamHost, c.ClaimStoreLocation, c.FreeTierRateLimit, c.FreeTierRateLimitDuration,
+		c.SubTierRateLimit, c.SubTierRateLimitDuration, c.AsGoTierRateLimit, c.AsGoTierRateLimitDuration)
 }
