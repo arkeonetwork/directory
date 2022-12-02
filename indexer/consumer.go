@@ -63,7 +63,7 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 	blocksSynced := 0
 	for currentBlock.Block.Height > int64(a.Height) {
 		nextHeight := int64(a.Height)
-		nextBlock, err := client.BlockResults(context.Background(), &nextHeight)
+		nextBlock, err := client.Block(context.Background(), &nextHeight)
 		if err != nil {
 			retries = retries - 1
 			log.Warnf("Getting next block results at height: %d failed, will retry %d more times", nextHeight, retries)
@@ -74,17 +74,23 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 			continue
 		}
 
-		for _, result := range nextBlock.TxsResults {
-			for _, event := range result.Events {
+		for _, transaction := range nextBlock.Block.Txs {
+			txInfo, err := client.Tx(context.Background(), transaction.Hash(), false)
+			if err != nil {
+				log.Warnf("failed to get transaction data for %s", transaction.Hash())
+				continue
+			}
+
+			for _, event := range txInfo.TxResult.Events {
 				switch event.Type {
 				case "open_contract":
-					convertedEvent := convertHistoricalEvent(event)
+					convertedEvent := convertHistoricalEvent(event, string(transaction.Hash()))
 					handleOpenContractEvent(a, &convertedEvent)
 				case "provider_bond":
-					convertedEvent := convertHistoricalEvent(event)
+					convertedEvent := convertHistoricalEvent(event, string(transaction.Hash()))
 					handleBondProviderEvent(a, &convertedEvent)
 				case "provider_mod":
-					convertedEvent := convertHistoricalEvent(event)
+					convertedEvent := convertHistoricalEvent(event, string(transaction.Hash()))
 					handleModProviderEvent(a, &convertedEvent)
 				}
 			}
@@ -128,12 +134,12 @@ func convertWebSocketEvent(etype string, raw map[string][]string) map[string]str
 	return newEvt
 }
 
-func convertHistoricalEvent(event abcitypes.Event) map[string]string {
+func convertHistoricalEvent(event abcitypes.Event, txHash string) map[string]string {
 	newEvt := make(map[string]string, 0)
 	for _, attr := range event.Attributes {
 		newEvt[string(attr.Key)] = string(attr.Value)
 	}
-	newEvt["txID"] = "none" // DELETEME once / if we remove tx id from tables
+	newEvt["txID"] = txHash
 	return newEvt
 }
 
