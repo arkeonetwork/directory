@@ -1,5 +1,3 @@
-drop table if exists contracts;
-
 create table contracts
 (
     id              bigserial                 not null
@@ -20,5 +18,6 @@ create table contracts
 alter table contracts
     add constraint pubkey_prov_dlgt_uniq unique (provider_id, delegate_pubkey);
 
--- may be good'nuf with unique constraint
--- create index contracts_prov_id_idx on provider_mod_events (provider_id);
+---- create above / drop below ----
+
+drop table contracts;

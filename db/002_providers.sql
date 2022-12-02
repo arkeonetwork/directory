@@ -1,5 +1,3 @@
-drop table if exists providers;
-
 create table providers
 (
     id                    bigserial                 not null
@@ -21,3 +19,7 @@ create table providers
 
 alter table providers
     add constraint pubkey_chain_uniq unique (pubkey, chain);
+
+---- create above / drop below ----
+
+drop table providers;

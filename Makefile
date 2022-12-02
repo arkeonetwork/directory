@@ -23,3 +23,6 @@ run-indexer: build
 
 run-api: build
 	go run cmd/api/main.go --env=./docker/dev/local.env
+
+db-migrate:
+	tern migrate -c db/tern.conf -m db

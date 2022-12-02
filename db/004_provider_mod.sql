@@ -1,5 +1,3 @@
-drop table if exists provider_mod_events;
-
 create table provider_mod_events
 (
     id                    bigserial                 not null
@@ -19,3 +17,7 @@ create table provider_mod_events
 );
 
 create index prov_mod_evts_prov_id_idx on provider_mod_events (provider_id);
+
+---- create above / drop below ----
+
+drop table provider_mod_events;
