@@ -132,8 +132,10 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 	if err != nil {
 		return errors.Wrap(err, "error getting current block")
 	}
-	log.Infof("Current block %d, syncing from block %d", currentBlock.Block.Height, a.Height)
+	blocksToSync := currentBlock.Block.Height - int64(a.Height)
+	log.Infof("Current block %d, syncing from block %d. %d blocks to go", currentBlock.Block.Height, a.Height, blocksToSync)
 	retries := 10
+	blocksSynced := 0
 	for currentBlock.Block.Height > int64(a.Height) {
 		nextHeight := int64(a.Height)
 		nextBlock, err := client.BlockResults(context.Background(), &nextHeight)
@@ -162,14 +164,20 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 				}
 			}
 		}
+		blocksSynced++
+		if blocksSynced%500 == 0 {
+			log.Debugf("synced %d of initial %d", blocksSynced, blocksToSync)
+		}
 
-		a.Height = a.Height + 1
+		a.Height++
 		if currentBlock.Block.Height == int64(a.Height) {
 			// we should update to see if new blocks have become available while we were processing
 			currentBlock, err = client.Block(context.Background(), nil)
 			if err != nil {
 				return errors.Wrap(err, "error getting current block")
 			}
+			blocksToSync = currentBlock.Block.Height - int64(a.Height)
+			blocksSynced = 0
 		}
 	}
 	return nil

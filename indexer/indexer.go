@@ -3,6 +3,7 @@ package indexer
 import (
 	"fmt"
 	"os"
+	"sync/atomic"
 
 	"github.com/ArkeoNetwork/directory/pkg/db"
 	"github.com/ArkeoNetwork/directory/pkg/logging"
@@ -26,7 +27,7 @@ type IndexerAppParams struct {
 
 type IndexerApp struct {
 	Height   uint64
-	IsSynced bool
+	IsSynced atomic.Bool
 	params   IndexerAppParams
 	db       *db.DirectoryDB
 	done     chan struct{}
@@ -67,31 +68,43 @@ func (a *IndexerApp) start() {
 		panic(fmt.Sprintf("error getting indexer state from db: %+v", err))
 	}
 
-	a.IsSynced = false
+	a.IsSynced.Store(false)
 	if indexerStatus == nil {
-		// this is the first time we have started the indexer wit this db, sync from heigh of 0
-		a.Height = 0
+		// this is the first time we have started the indexer wit this db, sync from heigh of 1 (0 will fail)
+		a.Height = 1
 	} else {
-		// we have existing records, roll back 60 blocks on startup to ensure we have not missed any events due to crashing, etc.
-		var rollbackBlocks uint64 = 60
+		// we have existing records, roll back 600 blocks on startup to ensure we have not missed any events due to crashing, etc.
+		var rollbackBlocks uint64 = 600
 		if indexerStatus.Height > rollbackBlocks {
 			a.Height = indexerStatus.Height - rollbackBlocks
 		} else {
-			a.Height = 0
+			a.Height = 1
 		}
 	}
-	log.Infof("Starting historical syncing from block height: %d", a.Height)
-	// unsure how to deal with syncronization here. Ideally we kick off new thread to background historical sync
-	// while we keep consuming events that are coming in real time. Currently we run the risk of missing
-	// some events in the transition from historical to real time.
-	a.consumeHistoricalEvents(client)
-	a.IsSynced = true
+
+	historicalEventCompleted := make(chan bool)
+	go func(complete chan bool) {
+		// We kick off new thread to background historical sync while we keep consuming events that are coming in real time.
+		// this should ensure that we don't miss any events since we will end up overlapping with out real time WS subscriptions
+		log.Infof("Starting historical syncing from block height: %d", a.Height)
+		err := a.consumeHistoricalEvents(client)
+		if err != nil {
+			log.Infof("Historical syncing failed")
+			complete <- false
+			// should we PANIC here?
+			return
+		}
+		log.Infof("Historical syncing completed")
+		a.IsSynced.Store(true)
+		complete <- true
+	}(historicalEventCompleted)
+	// since we dont' want to block here, not sure the historicalEventCompleted is even needed
 	a.consumeEvents(client)
 	a.done <- struct{}{}
 }
 
 func (a *IndexerApp) handleBlockEvent(height int64) error {
-	if !a.IsSynced {
+	if !a.IsSynced.Load() {
 		return nil // when we are syncing we don't want to update the DB until we are fully up to date.
 	}
 
