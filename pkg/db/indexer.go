@@ -22,7 +22,7 @@ func (d *DirectoryDB) InsertIndexerStatus(indexerStatus *IndexerStatus) (*Entity
 		return nil, errors.Wrapf(err, "error obtaining db connection")
 	}
 
-	return insert(conn, sqlInsertIndexerStatus, indexerStatus.ID, indexerStatus.Height)
+	return insert(conn, sqlUpsertIndexerStatus, indexerStatus.ID, indexerStatus.Height)
 }
 
 func (d *DirectoryDB) UpdateIndexerStatus(indexerStatus *IndexerStatus) (*Entity, error) {
