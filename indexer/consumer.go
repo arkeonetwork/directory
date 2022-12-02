@@ -85,7 +85,6 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 			for _, event := range txInfo.TxResult.Events {
 				switch event.Type {
 				case "open_contract":
-
 					convertedEvent := convertHistoricalEvent(event, hex.EncodeToString(transaction.Hash()[:]))
 					handleOpenContractEvent(a, &convertedEvent)
 				case "provider_bond":
