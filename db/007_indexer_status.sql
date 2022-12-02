@@ -1,5 +1,3 @@
-drop table if exists indexer_status;
-
 create table indexer_status
 (
     id          numeric not null
@@ -9,3 +7,6 @@ create table indexer_status
     updated     timestamptz default now() not null,
     height      numeric not null check ( height >= 0 )
 );
+
+---- create above / drop below ----
+drop table if exists indexer_status;
