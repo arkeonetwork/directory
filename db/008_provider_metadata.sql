@@ -5,8 +5,8 @@ create table provider_metadata
             primary key,
     created                       timestamptz default now() not null,
     updated                       timestamptz default now() not null,
+    provider_id                   bigint                    not null references providers (id),
     version                       text                      not null,
-    provider_id                   bigint                    not null references providers (id) unique,
     moniker                       text,
     website                       text,
     description                   text,
@@ -23,6 +23,9 @@ create table provider_metadata
     paygo_rate_limit              bigint,
     paygo_rate_limit_duration     bigint
 );
+
+alter table provider_metadata
+    add constraint prov_version_uniq unique (provider_id, version);
 
 ---- create above / drop below ----
 drop table provider_metadata;

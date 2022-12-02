@@ -139,15 +139,17 @@ func (d *DirectoryDB) InsertModProviderEvent(providerID int64, evt types.ModProv
 		evt.MinContractDuration, evt.MaxContractDuration, evt.SubscriptionRate, evt.PayAsYouGoRate)
 }
 
-func (d *DirectoryDB) UpsertProviderMetadata(providerID int64, data sentinel.Metadata) (*Entity, error) {
+func (d *DirectoryDB) UpsertProviderMetadata(providerID int64, version string, data sentinel.Metadata) (*Entity, error) {
+	data.Version = version
 	conn, err := d.getConnection()
 	defer conn.Release()
 	if err != nil {
 		return nil, errors.Wrapf(err, "error obtaining db connection")
 	}
 
+	// TODO - always insert instead of upsert, fail on dupe (or read and fail on exists). are there any restrictions on version string?
 	c := data.Configuration
-	return upsert(conn, sqlUpsertProviderMetadata, providerID, data.Version, c.Moniker, c.Website, c.Description, c.Location,
+	return insert(conn, sqlUpsertProviderMetadata, providerID, data.Version, c.Moniker, c.Website, c.Description, c.Location,
 		c.Port, c.ProxyHost, c.SourceChain, c.EventStreamHost, c.ClaimStoreLocation, c.FreeTierRateLimit, c.FreeTierRateLimitDuration,
 		c.SubTierRateLimit, c.SubTierRateLimitDuration, c.AsGoTierRateLimit, c.AsGoTierRateLimitDuration)
 }
