@@ -45,4 +45,14 @@ var (
 		insert into provider_mod_events(provider_id,txid,metadata_uri,metadata_nonce,status,min_contract_duration,max_contract_duration,subscription_rate,paygo_rate)
 		values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id, created, updated
 	`
+	sqlUpsertProviderMetadata = `
+		insert into provider_metadata(provider_id,version,moniker,website,description,location,port,proxy_host,source_chain,event_stream_host,claim_store_location,
+			free_rate_limit,free_rate_limit_duration,subscribe_rate_limit,subscribe_rate_limit_duration,paygo_rate_limit,paygo_rate_limit_duration)
+		values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+		on conflict on constraint provider_metadata_provider_id_key
+		do update set version = $2, moniker = $3, website = $4, description = $5, location = $6, port = $7, proxy_host = $8,
+		source_chain = $9, event_stream_host = $10, claim_store_location = $11, free_rate_limit = $12, free_rate_limit_duration = $13,
+		subscribe_rate_limit = $14,subscribe_rate_limit_duration = $15,  paygo_rate_limit = $16, paygo_rate_limit_duration = $17, updated = now()
+		returning id, created, updated
+	`
 )
