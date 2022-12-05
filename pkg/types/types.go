@@ -5,6 +5,7 @@ import "math/big"
 type BondProviderEvent struct {
 	Pubkey       string
 	Chain        string
+	Height       int64
 	TxID         string
 	BondRelative *big.Int
 	BondAbsolute *big.Int
@@ -40,6 +41,7 @@ var (
 type ModProviderEvent struct {
 	Pubkey              string
 	Chain               string
+	Height              int64
 	TxID                string
 	MetadataURI         string
 	MetadataNonce       uint64
@@ -58,6 +60,7 @@ type Coordinates struct {
 type ProviderSortKey string
 
 var (
+	ProviderSortKeyNone          ProviderSortKey = ""
 	ProviderSortKeyAge           ProviderSortKey = "age"
 	ProviderSortKeyContractCount ProviderSortKey = "contract_count"
 	ProviderSortKeyAmountPaid    ProviderSortKey = "anount_paid"

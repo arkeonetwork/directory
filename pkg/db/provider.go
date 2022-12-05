@@ -105,6 +105,19 @@ func (d *DirectoryDB) SearchProviders(criteria types.ProviderSearchParams) ([]*A
 		sb = sb.Where(sb.Equal("chain", criteria.Chain))
 	}
 
+	switch criteria.SortKey {
+	case types.ProviderSortKeyNone:
+		// NOP
+	case types.ProviderSortKeyAge:
+		sb = sb.OrderBy("created").Asc()
+	case types.ProviderSortKeyContractCount:
+		// TODO
+	case types.ProviderSortKeyAmountPaid:
+		// TODO
+	default:
+		return nil, fmt.Errorf("not a valid sortKey %s", criteria.SortKey)
+	}
+
 	sql, params := sb.BuildWithFlavor(getFlavor())
 	log.Debugf("sql: %s\n%v", sql, params)
 

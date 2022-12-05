@@ -86,18 +86,18 @@ func (a *ApiService) searchProviders(response http.ResponseWriter, request *http
 	}
 
 	searchParams := types.ProviderSearchParams{}
-	if sort != "" {
-		switch sort {
-		case string(types.ProviderSortKeyAge):
-			searchParams.SortKey = types.ProviderSortKeyAge
-		case string(types.ProviderSortKeyAmountPaid):
-			searchParams.SortKey = types.ProviderSortKeyAmountPaid
-		case string(types.ProviderSortKeyContractCount):
-			searchParams.SortKey = types.ProviderSortKeyContractCount
-		default:
-			respondWithError(response, http.StatusBadRequest, "sort key can not be parsed")
-			return
-		}
+
+	switch sort {
+	case string(types.ProviderSortKeyNone):
+	case string(types.ProviderSortKeyAge):
+		searchParams.SortKey = types.ProviderSortKeyAge
+	case string(types.ProviderSortKeyAmountPaid):
+		searchParams.SortKey = types.ProviderSortKeyAmountPaid
+	case string(types.ProviderSortKeyContractCount):
+		searchParams.SortKey = types.ProviderSortKeyContractCount
+	default:
+		respondWithError(response, http.StatusBadRequest, "sort key can not be parsed")
+		return
 	}
 
 	searchParams.Pubkey = pubkey
