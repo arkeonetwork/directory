@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -67,8 +68,10 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 		nextHeight := int64(a.Height)
 		nextBlock, err := client.Block(context.Background(), &nextHeight)
 		if err != nil {
+			log.Errorf("error reading block %d: %+v", nextHeight, err)
 			retries = retries - 1
 			log.Warnf("Getting next block results at height: %d failed, will retry %d more times", nextHeight, retries)
+			time.Sleep(time.Second)
 			if retries == 0 {
 				log.Errorf("Getting next block results at height: %d failed with no additional retries", nextHeight)
 				return errors.Wrapf(err, "error getting block results at height: %d", nextHeight)

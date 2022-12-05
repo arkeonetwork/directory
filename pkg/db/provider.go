@@ -82,8 +82,18 @@ func (d *DirectoryDB) FindProvider(pubkey string, chain string) (*ArkeoProvider,
 }
 
 const provSearchCols = `
-"id", "created", "pubkey", "chain", coalesce(status,'Offline') as status, "metadata_uri", "metadata_nonce",
-		"subscription_rate", "paygo_rate", "min_contract_duration", "max_contract_duration", "bond"
+	id,
+	created,
+	pubkey,
+	chain, 
+	coalesce(status,'Offline') as status,
+	coalesce(metadata_uri,'') as metadata_uri,
+	coalesce(metadata_nonce,0) as metadata_nonce,
+	coalesce(subscription_rate,0) as subscription_rate,
+	coalesce(paygo_rate,0) as paygo_rate,
+	coalesce(min_contract_duration,0) as min_contract_duration,
+	coalesce(max_contract_duration,0) as max_contract_duration,
+	coalesce(bond,0) as bond
 `
 
 func (d *DirectoryDB) SearchProviders(criteria types.ProviderSearchParams) ([]*ArkeoProvider, error) {
