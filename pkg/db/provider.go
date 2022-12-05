@@ -142,7 +142,7 @@ func (d *DirectoryDB) InsertBondProviderEvent(providerID int64, evt types.BondPr
 		return nil, errors.Wrapf(err, "error obtaining db connection")
 	}
 
-	return insert(conn, sqlInsertBondProviderEvent, providerID, evt.TxID, evt.BondRelative.String(), evt.BondAbsolute.String())
+	return insert(conn, sqlInsertBondProviderEvent, providerID, evt.Height, evt.TxID, evt.BondRelative.String(), evt.BondAbsolute.String())
 }
 
 func (d *DirectoryDB) InsertModProviderEvent(providerID int64, evt types.ModProviderEvent) (*Entity, error) {
@@ -152,7 +152,7 @@ func (d *DirectoryDB) InsertModProviderEvent(providerID int64, evt types.ModProv
 		return nil, errors.Wrapf(err, "error obtaining db connection")
 	}
 
-	return insert(conn, sqlInsertModProviderEvent, providerID, evt.TxID, evt.MetadataURI, evt.MetadataNonce, evt.Status,
+	return insert(conn, sqlInsertModProviderEvent, providerID, evt.Height, evt.TxID, evt.MetadataURI, evt.MetadataNonce, evt.Status,
 		evt.MinContractDuration, evt.MaxContractDuration, evt.SubscriptionRate, evt.PayAsYouGoRate)
 }
 

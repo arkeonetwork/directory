@@ -98,7 +98,7 @@ func validateProviderStatus(s string) bool {
 }
 
 func parseBondProviderEvent(input map[string]string) (types.BondProviderEvent, error) {
-	// var err error
+	var err error
 	var ok bool
 	evt := types.BondProviderEvent{}
 
@@ -113,6 +113,10 @@ func parseBondProviderEvent(input map[string]string) (types.BondProviderEvent, e
 			evt.Chain = v
 		case "txID":
 			evt.TxID = v
+		case "height":
+			if evt.Height, err = strconv.ParseInt(v, 10, 64); err != nil {
+				return evt, errors.Wrapf(err, "error parsing height %s", v)
+			}
 		case "bond_rel":
 			evt.BondRelative, ok = new(big.Int).SetString(v, 10)
 			if !ok {
@@ -143,6 +147,10 @@ func parseModProviderEvent(input map[string]string) (types.ModProviderEvent, err
 				return evt, fmt.Errorf("invalid chain %s", v)
 			}
 			evt.Chain = v
+		case "height":
+			if evt.Height, err = strconv.ParseInt(v, 10, 64); err != nil {
+				return evt, errors.Wrapf(err, "error parsing height %s", v)
+			}
 		case "txID":
 			evt.TxID = v
 		case "metadata_uri":
@@ -176,7 +184,7 @@ func parseModProviderEvent(input map[string]string) (types.ModProviderEvent, err
 				return evt, errors.Wrapf(err, "error parsing pay-as-you-go_rate %s", v)
 			}
 		default:
-			log.Warnf("not a support attribute for mod-provider %s", k)
+			log.Warnf("not a supported attribute for mod-provider %s", k)
 		}
 	}
 
