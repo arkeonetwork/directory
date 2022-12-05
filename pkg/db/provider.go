@@ -81,6 +81,11 @@ func (d *DirectoryDB) FindProvider(pubkey string, chain string) (*ArkeoProvider,
 	return &provider, nil
 }
 
+const provSearchCols = `
+"id", "created", "pubkey", "chain", coalesce(status,'Offline') as status, "metadata_uri", "metadata_nonce",
+		"subscription_rate", "paygo_rate", "min_contract_duration", "max_contract_duration", "bond"
+`
+
 func (d *DirectoryDB) SearchProviders(criteria types.ProviderSearchParams) ([]*ArkeoProvider, error) {
 	conn, err := d.getConnection()
 	defer conn.Release()
@@ -90,8 +95,7 @@ func (d *DirectoryDB) SearchProviders(criteria types.ProviderSearchParams) ([]*A
 
 	sb := sqlbuilder.NewSelectBuilder()
 
-	sb.Select("id", "created", "pubkey", "chain", "status", "metadata_uri", "metadata_nonce",
-		"subscription_rate", "paygo_rate", "min_contract_duration", "max_contract_duration", "bond").
+	sb.Select(provSearchCols).
 		From("providers")
 
 	if criteria.Pubkey != "" {
