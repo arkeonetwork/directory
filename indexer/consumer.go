@@ -5,8 +5,10 @@ import (
 	"encoding/hex"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -66,8 +68,10 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 		nextHeight := int64(a.Height)
 		nextBlock, err := client.Block(context.Background(), &nextHeight)
 		if err != nil {
+			log.Errorf("error reading block %d: %+v", nextHeight, err)
 			retries = retries - 1
 			log.Warnf("Getting next block results at height: %d failed, will retry %d more times", nextHeight, retries)
+			time.Sleep(time.Second)
 			if retries == 0 {
 				log.Errorf("Getting next block results at height: %d failed with no additional retries", nextHeight)
 				return errors.Wrapf(err, "error getting block results at height: %d", nextHeight)
@@ -85,13 +89,13 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 			for _, event := range txInfo.TxResult.Events {
 				switch event.Type {
 				case "open_contract":
-					convertedEvent := convertHistoricalEvent(event, hex.EncodeToString(transaction.Hash()[:]))
+					convertedEvent := convertHistoricalEvent(event, txInfo.Height, hex.EncodeToString(transaction.Hash()[:]))
 					handleOpenContractEvent(a, &convertedEvent)
 				case "provider_bond":
-					convertedEvent := convertHistoricalEvent(event, hex.EncodeToString(transaction.Hash()[:]))
+					convertedEvent := convertHistoricalEvent(event, txInfo.Height, hex.EncodeToString(transaction.Hash()[:]))
 					handleBondProviderEvent(a, &convertedEvent)
 				case "provider_mod":
-					convertedEvent := convertHistoricalEvent(event, hex.EncodeToString(transaction.Hash()[:]))
+					convertedEvent := convertHistoricalEvent(event, txInfo.Height, hex.EncodeToString(transaction.Hash()[:]))
 					handleModProviderEvent(a, &convertedEvent)
 				}
 			}
@@ -125,6 +129,12 @@ func convertWebSocketEvent(etype string, raw map[string][]string) map[string]str
 		log.Warnf("no tx.hash in event attributes: %#v", raw)
 	}
 
+	if height, ok := raw["tx.height"]; ok && len(height) > 0 {
+		newEvt["height"] = height[0]
+	} else {
+		log.Warnf("no tx.hash in event attributes: %#v", raw)
+	}
+
 	for k, v := range raw {
 		if strings.HasPrefix(k, etype+".") {
 			parts := strings.SplitN(k, ".", 2)
@@ -135,11 +145,12 @@ func convertWebSocketEvent(etype string, raw map[string][]string) map[string]str
 	return newEvt
 }
 
-func convertHistoricalEvent(event abcitypes.Event, txHash string) map[string]string {
+func convertHistoricalEvent(event abcitypes.Event, height int64, txHash string) map[string]string {
 	newEvt := make(map[string]string, 0)
 	for _, attr := range event.Attributes {
 		newEvt[string(attr.Key)] = string(attr.Value)
 	}
+	newEvt["height"] = strconv.FormatInt(height, 10)
 	newEvt["txID"] = txHash
 	return newEvt
 }
@@ -184,7 +195,7 @@ func handleModProviderEvent(a *IndexerApp, convertedEvent *map[string]string) {
 		return
 	}
 	if err = a.handleModProviderEvent(modProviderEvent); err != nil {
-		log.Errorf("error storing provider bond event: %+v", err)
+		log.Errorf("error storing provider mod event: %+v", err)
 		return
 	}
 	log.Infof("providerModEvent: %#v", modProviderEvent)

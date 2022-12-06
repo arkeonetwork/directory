@@ -16,7 +16,7 @@ func TestInsertProvider(t *testing.T) {
 
 	entity, err := db.InsertProvider(&ArkeoProvider{
 		Pubkey: uuid.NewString(),
-		Chain:  "bitcoin-mainnet",
+		Chain:  "btc-mainnet-fullnode",
 		Bond:   "1234567890",
 	})
 	if err != nil {

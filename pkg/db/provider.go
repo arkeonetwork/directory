@@ -81,6 +81,21 @@ func (d *DirectoryDB) FindProvider(pubkey string, chain string) (*ArkeoProvider,
 	return &provider, nil
 }
 
+const provSearchCols = `
+	p.id,
+	p.created,
+	p.pubkey,
+	p.chain, 
+	coalesce(p.status,'Offline') as status,
+	coalesce(p.metadata_uri,'') as metadata_uri,
+	coalesce(p.metadata_nonce,0) as metadata_nonce,
+	coalesce(p.subscription_rate,0) as subscription_rate,
+	coalesce(p.paygo_rate,0) as paygo_rate,
+	coalesce(p.min_contract_duration,0) as min_contract_duration,
+	coalesce(p.max_contract_duration,0) as max_contract_duration,
+	coalesce(p.bond,0) as bond
+`
+
 func (d *DirectoryDB) SearchProviders(criteria types.ProviderSearchParams) ([]*ArkeoProvider, error) {
 	conn, err := d.getConnection()
 	defer conn.Release()
@@ -90,15 +105,31 @@ func (d *DirectoryDB) SearchProviders(criteria types.ProviderSearchParams) ([]*A
 
 	sb := sqlbuilder.NewSelectBuilder()
 
-	sb.Select("id", "created", "pubkey", "chain", "status", "metadata_uri", "metadata_nonce",
-		"subscription_rate", "paygo_rate", "min_contract_duration", "max_contract_duration", "bond").
-		From("providers")
+	sb.Select(provSearchCols).
+		From("providers p")
 
 	if criteria.Pubkey != "" {
 		sb = sb.Where(sb.Equal("pubkey", criteria.Pubkey))
 	}
 	if criteria.Chain != "" {
 		sb = sb.Where(sb.Equal("chain", criteria.Chain))
+	}
+	if criteria.IsMinRateLimitSet {
+		sb = sb.JoinWithOption(sqlbuilder.LeftJoin, "provider_metadata", "p.id = provider_metadata.provider_id") //("provider_metadata")
+		sb = sb.Where(sb.GE("provider_metadata.paygo_rate_limit", criteria.MinRateLimit))
+	}
+
+	switch criteria.SortKey {
+	case types.ProviderSortKeyNone:
+		// NOP
+	case types.ProviderSortKeyAge:
+		sb = sb.OrderBy("created").Asc()
+	case types.ProviderSortKeyContractCount:
+		// TODO
+	case types.ProviderSortKeyAmountPaid:
+		// TODO
+	default:
+		return nil, fmt.Errorf("not a valid sortKey %s", criteria.SortKey)
 	}
 
 	sql, params := sb.BuildWithFlavor(getFlavor())
@@ -125,7 +156,7 @@ func (d *DirectoryDB) InsertBondProviderEvent(providerID int64, evt types.BondPr
 		return nil, errors.Wrapf(err, "error obtaining db connection")
 	}
 
-	return insert(conn, sqlInsertBondProviderEvent, providerID, evt.TxID, evt.BondRelative.String(), evt.BondAbsolute.String())
+	return insert(conn, sqlInsertBondProviderEvent, providerID, evt.Height, evt.TxID, evt.BondRelative.String(), evt.BondAbsolute.String())
 }
 
 func (d *DirectoryDB) InsertModProviderEvent(providerID int64, evt types.ModProviderEvent) (*Entity, error) {
@@ -135,7 +166,7 @@ func (d *DirectoryDB) InsertModProviderEvent(providerID int64, evt types.ModProv
 		return nil, errors.Wrapf(err, "error obtaining db connection")
 	}
 
-	return insert(conn, sqlInsertModProviderEvent, providerID, evt.TxID, evt.MetadataURI, evt.MetadataNonce, evt.Status,
+	return insert(conn, sqlInsertModProviderEvent, providerID, evt.Height, evt.TxID, evt.MetadataURI, evt.MetadataNonce, evt.Status,
 		evt.MinContractDuration, evt.MaxContractDuration, evt.SubscriptionRate, evt.PayAsYouGoRate)
 }
 

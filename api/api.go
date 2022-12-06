@@ -63,8 +63,8 @@ func buildRouter(a *ApiService) *mux.Router {
 	router.HandleFunc("/stats/{chain}", getStatsChain).Methods(http.MethodGet)
 
 	providerRouter := router.PathPrefix("/provider").Subrouter()
-	// FIXME: routes collide providerRouter.HandleFunc("/{pubkey}", a.getProvider).Methods(http.MethodGet)
-	providerRouter.HandleFunc("/search", a.searchProviders).Methods(http.MethodGet)
+	providerRouter.HandleFunc("/{pubkey}", a.getProvider).Methods(http.MethodGet)
+	providerRouter.HandleFunc("/search/", a.searchProviders).Methods(http.MethodGet)
 
 	// router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 	// 	tpl, _ := route.GetPathTemplate()
