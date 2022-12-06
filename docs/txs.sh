@@ -28,12 +28,12 @@ sleep 6
 # Error: accepts 7 arg(s), received 0
 # Usage:
 #   arkeod tx arkeo open-contract [provider_pubkey] [chain] [client_pubkey] [c-type] [deposit] [duration] [rate] [delegation-optional] [flags]
-arkeod tx arkeo open-contract $alicekey btc-mainnet-fullnode $bobkey 1 60 100 20 --from bob -y
+# arkeod tx arkeo open-contract $alicekey btc-mainnet-fullnode $bobkey 1 60 100 20 --from bob -y
 
 # sleep 5
 
 # open subscription contract
-# arkeod tx arkeo open-contract $alicekey btc-mainnet-fullnode $bobkey 0 300 30 10 --from bob -y
+arkeod tx arkeo open-contract $alicekey btc-mainnet-fullnode $bobkey 0 300 30 10 --from bob -y
 
 # close contract
 # arkeod tx arkeo close-contract $alicekey btc-mainnet-fullnode $bobkey --from alice -y

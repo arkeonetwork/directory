@@ -82,18 +82,18 @@ func (d *DirectoryDB) FindProvider(pubkey string, chain string) (*ArkeoProvider,
 }
 
 const provSearchCols = `
-	id,
-	created,
-	pubkey,
-	chain, 
-	coalesce(status,'Offline') as status,
-	coalesce(metadata_uri,'') as metadata_uri,
-	coalesce(metadata_nonce,0) as metadata_nonce,
-	coalesce(subscription_rate,0) as subscription_rate,
-	coalesce(paygo_rate,0) as paygo_rate,
-	coalesce(min_contract_duration,0) as min_contract_duration,
-	coalesce(max_contract_duration,0) as max_contract_duration,
-	coalesce(bond,0) as bond
+	p.id,
+	p.created,
+	p.pubkey,
+	p.chain, 
+	coalesce(p.status,'Offline') as status,
+	coalesce(p.metadata_uri,'') as metadata_uri,
+	coalesce(p.metadata_nonce,0) as metadata_nonce,
+	coalesce(p.subscription_rate,0) as subscription_rate,
+	coalesce(p.paygo_rate,0) as paygo_rate,
+	coalesce(p.min_contract_duration,0) as min_contract_duration,
+	coalesce(p.max_contract_duration,0) as max_contract_duration,
+	coalesce(p.bond,0) as bond
 `
 
 func (d *DirectoryDB) SearchProviders(criteria types.ProviderSearchParams) ([]*ArkeoProvider, error) {
@@ -106,13 +106,17 @@ func (d *DirectoryDB) SearchProviders(criteria types.ProviderSearchParams) ([]*A
 	sb := sqlbuilder.NewSelectBuilder()
 
 	sb.Select(provSearchCols).
-		From("providers")
+		From("providers p")
 
 	if criteria.Pubkey != "" {
 		sb = sb.Where(sb.Equal("pubkey", criteria.Pubkey))
 	}
 	if criteria.Chain != "" {
 		sb = sb.Where(sb.Equal("chain", criteria.Chain))
+	}
+	if criteria.IsMinRateLimitSet {
+		sb = sb.JoinWithOption(sqlbuilder.LeftJoin, "provider_metadata", "p.id = provider_metadata.provider_id") //("provider_metadata")
+		sb = sb.Where(sb.GE("provider_metadata.paygo_rate_limit", criteria.MinRateLimit))
 	}
 
 	switch criteria.SortKey {

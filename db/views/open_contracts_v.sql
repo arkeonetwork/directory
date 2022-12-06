@@ -1,4 +1,4 @@
-create or replace view open_contracts_v as
+create view open_contracts_v as
 (
 with indexed_height as (select height
                         from indexer_status
