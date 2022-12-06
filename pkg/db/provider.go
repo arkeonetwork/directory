@@ -108,6 +108,7 @@ func (d *DirectoryDB) SearchProviders(criteria types.ProviderSearchParams) ([]*A
 	sb.Select(provSearchCols).
 		From("providers_v p")
 
+	// Filter
 	if criteria.Pubkey != "" {
 		sb = sb.Where(sb.Equal("pubkey", criteria.Pubkey))
 	}
@@ -121,7 +122,14 @@ func (d *DirectoryDB) SearchProviders(criteria types.ProviderSearchParams) ([]*A
 	if criteria.IsMinProviderAgeSet {
 		sb = sb.Where(sb.GE("p.age", criteria.MinProviderAge))
 	}
-
+	if criteria.IsMinOpenContractsSet {
+		// p.open_contract_count
+		sb = sb.Where(sb.GE("p.contract_count", criteria.MinOpenContracts))
+	}
+	if criteria.IsMinValidatorPaymentsSet {
+		sb = sb.Where(sb.GE("p.total_paid", criteria.MinValidatorPayments))
+	}
+	// Sort
 	switch criteria.SortKey {
 	case types.ProviderSortKeyNone:
 		// NOP
