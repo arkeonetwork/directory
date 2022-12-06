@@ -8,8 +8,8 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/ArkeoNetwork/directory/pkg/db"
 	"github.com/pkg/errors"
-
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	tmclient "github.com/tendermint/tendermint/rpc/client/http"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -87,18 +87,36 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 				case "open_contract":
 					convertedEvent := convertHistoricalEvent(event, hex.EncodeToString(transaction.Hash()[:]))
 					handleOpenContractEvent(a, &convertedEvent)
+				case "close_contract":
+					convertedEvent := convertHistoricalEvent(event, hex.EncodeToString(transaction.Hash()[:]))
+					handleCloseContractEvent(a, &convertedEvent)
+				case "contract_settlement":
+					convertedEvent := convertHistoricalEvent(event, hex.EncodeToString(transaction.Hash()[:]))
+					handleContractSettlementEvent(a, &convertedEvent)
 				case "provider_bond":
 					convertedEvent := convertHistoricalEvent(event, hex.EncodeToString(transaction.Hash()[:]))
 					handleBondProviderEvent(a, &convertedEvent)
 				case "provider_mod":
 					convertedEvent := convertHistoricalEvent(event, hex.EncodeToString(transaction.Hash()[:]))
 					handleModProviderEvent(a, &convertedEvent)
+				case "validator_payout":
+					convertedEvent := convertHistoricalEvent(event, hex.EncodeToString(transaction.Hash()[:]))
+					handleValidatorPayoutEvent(a, &convertedEvent)
 				}
 			}
 		}
 		blocksSynced++
 		if blocksSynced%500 == 0 {
 			log.Debugf("synced %d of initial %d", blocksSynced, blocksToSync)
+			// update DB periodically to avoid having to sync all over
+			indexerStatus := db.IndexerStatus{
+				ID:     a.params.IndexerID,
+				Height: uint64(nextHeight),
+			}
+			_, err := a.db.UpsertIndexerStatus(&indexerStatus)
+			if err != nil {
+				log.Warnf("error writing block status to db %#v", err)
+			}
 		}
 
 		a.Height++
@@ -175,6 +193,42 @@ func handleOpenContractEvent(a *IndexerApp, convertedEvent *map[string]string) {
 		log.Errorf("error handling open contract event: %+v", err)
 		return
 	}
+}
+
+func handleCloseContractEvent(a *IndexerApp, convertedEvent *map[string]string) {
+	// openContractEvent, err := parseOpenContractEvent(*convertedEvent)
+	// if err != nil {
+	// 	log.Errorf("error parsing openContractEvent: %+v", err)
+	// 	return
+	// }
+	// if err = a.handleOpenContractEvent(openContractEvent); err != nil {
+	// 	log.Errorf("error handling open contract event: %+v", err)
+	// 	return
+	// }
+}
+
+func handleContractSettlementEvent(a *IndexerApp, convertedEvent *map[string]string) {
+	// openContractEvent, err := parseOpenContractEvent(*convertedEvent)
+	// if err != nil {
+	// 	log.Errorf("error parsing openContractEvent: %+v", err)
+	// 	return
+	// }
+	// if err = a.handleOpenContractEvent(openContractEvent); err != nil {
+	// 	log.Errorf("error handling open contract event: %+v", err)
+	// 	return
+	// }
+}
+
+func handleValidatorPayoutEvent(a *IndexerApp, convertedEvent *map[string]string) {
+	// openContractEvent, err := parseOpenContractEvent(*convertedEvent)
+	// if err != nil {
+	// 	log.Errorf("error parsing openContractEvent: %+v", err)
+	// 	return
+	// }
+	// if err = a.handleOpenContractEvent(openContractEvent); err != nil {
+	// 	log.Errorf("error handling open contract event: %+v", err)
+	// 	return
+	// }
 }
 
 func handleModProviderEvent(a *IndexerApp, convertedEvent *map[string]string) {

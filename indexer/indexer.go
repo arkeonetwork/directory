@@ -111,7 +111,7 @@ func (a *IndexerApp) handleBlockEvent(height int64) error {
 		ID:     a.params.IndexerID,
 		Height: uint64(height),
 	}
-	_, err := a.db.InsertIndexerStatus(&indexerStatus)
+	_, err := a.db.UpsertIndexerStatus(&indexerStatus)
 	if err != nil {
 		return errors.Wrapf(err, "error updating indexer status for %d height %d", indexerStatus.ID, indexerStatus.Height)
 	}
