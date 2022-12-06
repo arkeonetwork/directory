@@ -39,7 +39,6 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 		case evt := <-openContractEvents:
 			log.Debugf("received open contract event")
 			converted := convertWebSocketEvent("open_contract", evt.Events)
-			log.Infof("converted open_contract map: %#v", converted)
 			handleOpenContractEvent(a, &converted)
 		case evt := <-bondProviderEvents:
 			converted := convertWebSocketEvent("provider_bond", evt.Events)
@@ -89,13 +88,13 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 			for _, event := range txInfo.TxResult.Events {
 				switch event.Type {
 				case "open_contract":
-					convertedEvent := convertHistoricalEvent(event, txInfo.Height, hex.EncodeToString(transaction.Hash()[:]))
+					convertedEvent := convertHistoricalEvent(event, txInfo.Height, strings.ToUpper(hex.EncodeToString(transaction.Hash()[:])))
 					handleOpenContractEvent(a, &convertedEvent)
 				case "provider_bond":
-					convertedEvent := convertHistoricalEvent(event, txInfo.Height, hex.EncodeToString(transaction.Hash()[:]))
+					convertedEvent := convertHistoricalEvent(event, txInfo.Height, strings.ToUpper(hex.EncodeToString(transaction.Hash()[:])))
 					handleBondProviderEvent(a, &convertedEvent)
 				case "provider_mod":
-					convertedEvent := convertHistoricalEvent(event, txInfo.Height, hex.EncodeToString(transaction.Hash()[:]))
+					convertedEvent := convertHistoricalEvent(event, txInfo.Height, strings.ToUpper(hex.EncodeToString(transaction.Hash()[:])))
 					handleModProviderEvent(a, &convertedEvent)
 				}
 			}
