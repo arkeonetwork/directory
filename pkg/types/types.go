@@ -50,6 +50,32 @@ type ModProviderEvent struct {
 	PayAsYouGoRate      int64
 }
 
+type ValidatorPayoutEvent struct {
+	TxID      string
+	Validator string
+	Paid      int64
+}
+
+type ContractSettleMentEvent struct {
+	ProviderPubkey string
+	Chain          string
+	ClientPubkey   string
+	DelegatePubkey string
+	TxID           string
+	ContractType   ContractType
+	ContractNonce  uint64
+	Height         int64
+	Paid           int64
+	Reserve        int64
+}
+
+type CloseContractEvent struct {
+	ProviderPubKey string
+	Chain          string
+	ClientPubKey   string
+	DelegatePubkey string
+}
+
 type Coordinates struct {
 	Latitude  float64
 	Longitude float64
