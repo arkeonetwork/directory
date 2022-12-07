@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ArkeoNetwork/directory/pkg/types"
+	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 
 	abcitypes "github.com/tendermint/tendermint/abci/types"
@@ -29,22 +30,29 @@ func wsAttributeSource(src ctypes.ResultEvent) func() map[string]string {
 	results := make(map[string]string, len(src.Events))
 	for k, v := range src.Events {
 		if len(v) > 0 {
-			results[k] = v[0]
+			key := k
+			if sl := strings.Split(k, "."); len(sl) > 1 {
+				key = sl[1]
+			}
+			if _, ok := results[key]; ok {
+				log.Warnf("key %s already in results with value %s, overwriting with %s", key, results[key], v[0])
+			}
+			results[key] = v[0]
 		}
 		if len(v) > 1 {
-			log.Warnf("attrib %s has %d values in array", k, len(v))
+			log.Warnf("attrib %s has %d array values: %v", k, len(v), v)
 		}
 	}
 	return func() map[string]string { return results }
 }
 
-func tmAttributeSource(src abcitypes.Event, height int64, txHash string) func() map[string]string {
+func tmAttributeSource(tx tmtypes.Tx, evt abcitypes.Event, height int64) func() map[string]string {
 	newEvt := make(map[string]string, 0)
-	for _, attr := range src.Attributes {
+	for _, attr := range evt.Attributes {
 		newEvt[string(attr.Key)] = string(attr.Value)
 	}
 	newEvt["height"] = strconv.FormatInt(height, 10)
-	newEvt["txID"] = txHash
+	newEvt["hash"] = strings.ToUpper(hex.EncodeToString(tx.Hash()[:]))
 	return func() map[string]string { return newEvt }
 }
 
@@ -74,18 +82,17 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 		case evt := <-openContractEvents:
 			log.Debugf("received open contract event")
 			openContractEvent := types.OpenContractEvent{}
-			if err := convertEvent(wsAttributeSource(evt), openContractEvent, "open_contract", 0, txHash); err != nil {
+			if err := convertEvent(wsAttributeSource(evt), &openContractEvent, 0, txHash); err != nil {
 				log.Errorf("error converting open_contract event: %+v", err)
 				break
 			}
 			if err := a.handleOpenContractEvent(openContractEvent); err != nil {
 				log.Errorf("error handling open_contract event: %+v", err)
-				break
 			}
 		case evt := <-bondProviderEvents:
-			log.Debug(evt)
+			log.Debugf("received bond provider event")
 			bondProviderEvent := types.BondProviderEvent{}
-			if err := convertEvent(wsAttributeSource(evt), bondProviderEvent, "bond_provider", 0, txHash); err != nil {
+			if err := convertEvent(wsAttributeSource(evt), &bondProviderEvent, 0, txHash); err != nil {
 				log.Errorf("error converting bond_provider event: %+v", err)
 				break
 			}
@@ -147,12 +154,13 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 				continue
 			}
 
-			txHash := "hist123"
+			txHash := strings.ToUpper(hex.EncodeToString(transaction.Hash()[:]))
 			for _, event := range txInfo.TxResult.Events {
 				switch event.Type {
 				case "open_contract":
 					openContractEvent := types.OpenContractEvent{}
-					if err := convertEvent(tmAttributeSource(event, currentBlock.Block.Height, txHash), openContractEvent, event.Type, currentBlock.Block.Height, txHash); err != nil {
+					// tmAttributeSource(tx tmtypes.Tx, evt abcitypes.Event, height int64)
+					if err := convertEvent(tmAttributeSource(transaction, event, currentBlock.Block.Height), openContractEvent, currentBlock.Block.Height, txHash); err != nil {
 						log.Errorf("error converting %s event: %+v", event.Type, err)
 						break
 					}
@@ -163,7 +171,7 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 					}
 				case "provider_bond":
 					bondProviderEvent := types.BondProviderEvent{}
-					if err = convertEvent(tmAttributeSource(event, currentBlock.Block.Height, txHash), &bondProviderEvent, event.Type, currentBlock.Block.Height, txHash); err != nil {
+					if err = convertEvent(tmAttributeSource(transaction, event, currentBlock.Block.Height), &bondProviderEvent, currentBlock.Block.Height, txHash); err != nil {
 						log.Errorf("error converting %s event: %+v", event.Type, err)
 						break
 					}
@@ -209,15 +217,17 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 	return nil
 }
 
-// TODO: if there are multiple of the same type of event, this may be
-// problematic, multiple events may get purged into one (not sure)
-
-func convertEvent(attributeFunc attributes, target interface{}, etype string, height int64, txHash string) error {
+// copy attributes of map given by attributeFunc() to target which must be a pointer (map/slice implicitly ptr)
+func convertEvent(attributeFunc attributes, target interface{}, height int64, txHash string) error {
 	m := attributeFunc()
-	if err := parseEvent(m, &target); err != nil {
-		log.Errorf("error parsingEvent: %+v", err)
+	return mapstructure.WeakDecode(m, target)
+}
+
+func parseEvent(input map[string]string, target interface{}) error {
+	if err := mapstructure.WeakDecode(input, target); err != nil {
+		return errors.Wrapf(err, "error reflecting properties to target")
 	}
-	return parseEvent(m, target)
+	return nil
 }
 
 func convertHistoricalEvent(event abcitypes.Event, height int64, txHash string) map[string]string {

@@ -4,7 +4,7 @@ type BondProviderEvent struct {
 	Pubkey       string `mapstructure:"pubkey"`
 	Chain        string `mapstructure:"chain"`
 	Height       int64  `mapstructure:"height"`
-	TxID         string `mapstructure:"txID"`
+	TxID         string `mapstructure:"hash"`
 	BondRelative string `mapstructure:"bond_rel"`
 	BondAbsolute string `mapstructure:"bond_abs"`
 }
