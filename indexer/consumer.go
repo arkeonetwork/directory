@@ -26,16 +26,16 @@ import (
 type attributes func() map[string]string
 
 func wsAttributeSource(src ctypes.ResultEvent) func() map[string]string {
-	y := make(map[string]string, len(src.Events))
+	results := make(map[string]string, len(src.Events))
 	for k, v := range src.Events {
 		if len(v) > 0 {
-			y[k] = v[0]
+			results[k] = v[0]
 		}
 		if len(v) > 1 {
 			log.Warnf("attrib %s has %d values in array", k, len(v))
 		}
 	}
-	return func() map[string]string { return y }
+	return func() map[string]string { return results }
 }
 
 func tmAttributeSource(src abcitypes.Event, height int64, txHash string) func() map[string]string {
@@ -217,25 +217,6 @@ func convertEvent(attributeFunc attributes, target interface{}, etype string, he
 	if err := parseEvent(m, &target); err != nil {
 		log.Errorf("error parsingEvent: %+v", err)
 	}
-	// if txID, ok := newEvt["tx.hash"]; ok {
-	// 	newEvt["txID"] = txID[0]
-	// } else {
-	// 	log.Warnf("no tx.hash in event attributes: %#v", raw)
-	// }
-
-	// if height, ok := raw["tx.height"]; ok && len(height) > 0 {
-	// 	newEvt["height"] = height[0]
-	// } else {
-	// 	log.Warnf("no height in event attributes: %#v", raw)
-	// }
-
-	// for k, v := range raw {
-	// 	if strings.HasPrefix(k, etype+".") {
-	// 		parts := strings.SplitN(k, ".", 2)
-	// 		newEvt[parts[1]] = v[0]
-	// 	}
-	// }
-
 	return parseEvent(m, target)
 }
 
