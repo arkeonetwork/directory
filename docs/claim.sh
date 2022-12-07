@@ -1,16 +1,15 @@
 #!/bin/bash
 
-source ./env.sh
+BASEDIR=$(dirname "$0")
+source $BASEDIR/env.sh
 
 # increment each invocation
-NONCE=10
+NONCE=11
 CHAIN=eth-mainnet-fullnode
 
 USER=bob
 PROVIDER_PUBKEY=$alicekey
 CLIENT_PUBKEY=$bobkey
-
-
 
 HEIGHT=$(curl -s localhost:1317/arkeo/contract/"$PROVIDER_PUBKEY"/"$CHAIN"/"$CLIENT_PUBKEY" | jq -r .contract.height)
 

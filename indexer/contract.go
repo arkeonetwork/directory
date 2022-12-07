@@ -80,3 +80,53 @@ func parseOpenContractEvent(input map[string]string) (types.OpenContractEvent, e
 	}
 	return evt, nil
 }
+
+/*
+	switch k {
+	case "pubkey":
+		evt.Contract.ProviderPubKey, err = common.NewPubKey(v)
+		if err != nil {
+			return evt, err
+		}
+	case "chain":
+		evt.Contract.Chain, err = common.NewChain(v)
+		if err != nil {
+			return evt, err
+		}
+	case "client":
+		evt.Contract.Client, err = common.NewPubKey(v)
+		if err != nil {
+			return evt, err
+		}
+	case "delegate":
+		evt.Contract.Delegate, err = common.NewPubKey(v)
+		if err != nil {
+			return evt, err
+		}
+	case "type":
+		evt.Contract.Type = types.ContractType(types.ContractType_value[v])
+		if err != nil {
+			return evt, err
+		}
+	case "height":
+		evt.Contract.Height, err = strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return evt, err
+		}
+	case "nonce":
+		evt.Contract.Nonce, err = strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return evt, err
+		}
+	case "paid":
+		evt.Paid, ok = cosmos.NewIntFromString(v)
+		if !ok {
+			return evt, fmt.Errorf("cannot parse %s as int", v)
+		}
+	case "reserve":
+		evt.Reserve, ok = cosmos.NewIntFromString(v)
+		if !ok {
+			return evt, fmt.Errorf("cannot parse %s as int", v)
+		}
+	}
+*/

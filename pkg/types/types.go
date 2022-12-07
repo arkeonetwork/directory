@@ -40,6 +40,17 @@ type ContractSettlementEvent struct {
 	Reserve        string `mapstructure:"reserve"`
 }
 
+type ClaimContractIncomeEvent struct {
+	Pubkey       string `mapstructure:"pubkey"`
+	Chain        string `mapstructure:"chain"`
+	ClientPubkey string `mapstructure:"client"` // could be delegate?
+	Height       int64  `mapstructure:"height"`
+	TxID         string `mapstructure:"hash"`
+	Paid         string `mapstructure:"paid"`
+	Nonce        string `mapstructure:"nonce"`
+	Reserve      string `mapstructure:"reserve"`
+}
+
 type ValidatorPayoutEvent struct {
 	Validator string `mapstructure:"validator"`
 	TxID      string `mapstructure:"hash"`

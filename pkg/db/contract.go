@@ -8,13 +8,13 @@ import (
 type ArkeoContract struct {
 	Entity
 	ProviderID     int64              `db:"provider_id"`
-	DelegatePubkey string             `db:"bond"`
-	ClientPubkey   string             `db:"bond"`
-	Height         int64              `db:"bond"`
-	ContractType   types.ContractType `db:"bond"`
-	Duration       int64              `db:"bond"`
-	Rate           int64              `db:"bond"`
-	OpenCost       int64              `db:"bond"`
+	DelegatePubkey string             `db:"delegate_pubkey"`
+	ClientPubkey   string             `db:"client_pubkey"`
+	Height         int64              `db:"height"`
+	ContractType   types.ContractType `db:"contract_type"`
+	Duration       int64              `db:"duration"`
+	Rate           int64              `db:"rate"`
+	OpenCost       int64              `db:"open_cost"`
 }
 
 func (d *DirectoryDB) FindContract(providerID int64, delegatePubkey string) (*ArkeoContract, error) {
