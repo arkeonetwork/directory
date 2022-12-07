@@ -196,37 +196,37 @@ func handleOpenContractEvent(a *IndexerApp, convertedEvent *map[string]string) {
 }
 
 func handleCloseContractEvent(a *IndexerApp, convertedEvent *map[string]string) {
-	// openContractEvent, err := parseOpenContractEvent(*convertedEvent)
-	// if err != nil {
-	// 	log.Errorf("error parsing openContractEvent: %+v", err)
-	// 	return
-	// }
-	// if err = a.handleOpenContractEvent(openContractEvent); err != nil {
-	// 	log.Errorf("error handling open contract event: %+v", err)
-	// 	return
-	// }
+	closeContractEvent, err := parseCloseContractEvent(*convertedEvent)
+	if err != nil {
+		log.Errorf("error parsing closeContractEvent: %+v", err)
+		return
+	}
+	if err = a.handleCloseContractEvent(closeContractEvent); err != nil {
+		log.Errorf("error handling close contract event: %+v", err)
+		return
+	}
 }
 
 func handleContractSettlementEvent(a *IndexerApp, convertedEvent *map[string]string) {
-	// openContractEvent, err := parseOpenContractEvent(*convertedEvent)
-	// if err != nil {
-	// 	log.Errorf("error parsing openContractEvent: %+v", err)
-	// 	return
-	// }
-	// if err = a.handleOpenContractEvent(openContractEvent); err != nil {
-	// 	log.Errorf("error handling open contract event: %+v", err)
-	// 	return
-	// }
+	contractSettlementEvent, err := parseContractSettlementEvent(*convertedEvent)
+	if err != nil {
+		log.Errorf("error parsing contractSettlementEvent: %+v", err)
+		return
+	}
+	if err = a.handleContractSettlementEvent(contractSettlementEvent); err != nil {
+		log.Errorf("error handling open contract event: %+v", err)
+		return
+	}
 }
 
 func handleValidatorPayoutEvent(a *IndexerApp, convertedEvent *map[string]string) {
-	// openContractEvent, err := parseOpenContractEvent(*convertedEvent)
+	// validatorPayoutEvent, err := parseValidatorPayoutEvent(*convertedEvent)
 	// if err != nil {
-	// 	log.Errorf("error parsing openContractEvent: %+v", err)
+	// 	log.Errorf("error parsing validatorPayoutEvent: %+v", err)
 	// 	return
 	// }
-	// if err = a.handleOpenContractEvent(openContractEvent); err != nil {
-	// 	log.Errorf("error handling open contract event: %+v", err)
+	// if err = a.handleValidatorPayoutEvent(validatorPayoutEvent); err != nil {
+	// 	log.Errorf("error handling validator payout event: %+v", err)
 	// 	return
 	// }
 }

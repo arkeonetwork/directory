@@ -56,7 +56,7 @@ type ValidatorPayoutEvent struct {
 	Paid      int64
 }
 
-type ContractSettleMentEvent struct {
+type ContractSettlementEvent struct {
 	ProviderPubkey string
 	Chain          string
 	ClientPubkey   string
@@ -70,9 +70,10 @@ type ContractSettleMentEvent struct {
 }
 
 type CloseContractEvent struct {
-	ProviderPubKey string
+	ProviderPubkey string
+	TxID           string
 	Chain          string
-	ClientPubKey   string
+	ClientPubkey   string
 	DelegatePubkey string
 }
 

@@ -37,3 +37,23 @@ func TestParseCoordinates(t *testing.T) {
 		t.FailNow()
 	}
 }
+
+func TestParseContractType(t *testing.T) {
+	contract := "paygo"
+	_, err := ParseContractType(contract)
+	if err == nil {
+		t.FailNow()
+	}
+
+	contract = "PayAsYouGo"
+	_, err = ParseContractType(contract)
+	if err != nil {
+		t.FailNow()
+	}
+
+	contract = "Subscription"
+	_, err = ParseContractType(contract)
+	if err != nil {
+		t.FailNow()
+	}
+}
