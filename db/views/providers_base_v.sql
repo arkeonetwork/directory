@@ -3,7 +3,7 @@ create view providers_base_v as
 with indexed_height as (select height
                         from indexer_status
                         limit 1)
-select p.id                                                                   as provider_id,
+select p.id,
        p.pubkey,
        p.chain,
        p.bond,

@@ -12,7 +12,7 @@ import (
 )
 
 type ArkeoProvider struct {
-	Entity
+	Entity `json:"-"`
 	Pubkey string `db:"pubkey"`
 	Chain  string `db:"chain"`
 	// this is a DECIMAL type in the db
@@ -106,8 +106,9 @@ func (d *DirectoryDB) SearchProviders(criteria types.ProviderSearchParams) ([]*A
 	sb := sqlbuilder.NewSelectBuilder()
 
 	sb.Select(provSearchCols).
-		From("providers p")
+		From("providers_v p")
 
+	// Filter
 	if criteria.Pubkey != "" {
 		sb = sb.Where(sb.Equal("pubkey", criteria.Pubkey))
 	}
@@ -118,7 +119,17 @@ func (d *DirectoryDB) SearchProviders(criteria types.ProviderSearchParams) ([]*A
 		sb = sb.JoinWithOption(sqlbuilder.LeftJoin, "provider_metadata", "p.id = provider_metadata.provider_id") //("provider_metadata")
 		sb = sb.Where(sb.GE("provider_metadata.paygo_rate_limit", criteria.MinRateLimit))
 	}
-
+	if criteria.IsMinProviderAgeSet {
+		sb = sb.Where(sb.GE("p.age", criteria.MinProviderAge))
+	}
+	if criteria.IsMinOpenContractsSet {
+		// p.open_contract_count
+		sb = sb.Where(sb.GE("p.contract_count", criteria.MinOpenContracts))
+	}
+	if criteria.IsMinValidatorPaymentsSet {
+		sb = sb.Where(sb.GE("p.total_paid", criteria.MinValidatorPayments))
+	}
+	// Sort
 	switch criteria.SortKey {
 	case types.ProviderSortKeyNone:
 		// NOP
