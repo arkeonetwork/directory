@@ -21,7 +21,7 @@ type OpenContractEvent struct {
 	Chain          string       `mapstructure:"chain"`
 	ClientPubkey   string       `mapstructure:"client"`
 	DelegatePubkey string       `mapstructure:"client"`
-	TxID           string       `mapstructure:"txID"`
+	TxID           string       `mapstructure:"hash"`
 	ContractType   ContractType `mapstructure:"type"`
 	Height         int64        `mapstructure:"height"`
 	Duration       int64        `mapstructure:"duration"`
@@ -33,6 +33,7 @@ type ContractSettlementEvent struct {
 	ProviderPubkey string `mapstructure:"pubkey"`
 	Chain          string `mapstructure:"chain"`
 	ClientPubkey   string `mapstructure:"client"`
+	TxID           string `mapstructure:"hash"`
 	Paid           string `mapstructure:"paid"`
 	Height         string `mapstructure:"height"`
 	Nonce          string `mapstructure:"nonce"`
@@ -41,6 +42,7 @@ type ContractSettlementEvent struct {
 
 type ValidatorPayoutEvent struct {
 	Validator string `mapstructure:"validator"`
+	TxID      string `mapstructure:"hash"`
 	Paid      string `mapstructure:"paid"`
 }
 
@@ -52,17 +54,17 @@ var (
 )
 
 type ModProviderEvent struct {
-	Pubkey              string
-	Chain               string
-	Height              int64
-	TxID                string
-	MetadataURI         string
-	MetadataNonce       uint64
-	Status              ProviderStatus
-	MinContractDuration int64
-	MaxContractDuration int64
-	SubscriptionRate    int64
-	PayAsYouGoRate      int64
+	Pubkey              string         `mapstructure:"pubkey"`
+	Chain               string         `mapstructure:"chain"`
+	Height              int64          `mapstructure:"height"`
+	TxID                string         `mapstructure:"hash"`
+	MetadataURI         string         `mapstructure:"metadata_uri"`
+	MetadataNonce       uint64         `mapstructure:"metadata_nonce"`
+	Status              ProviderStatus `mapstructure:"status"`
+	MinContractDuration int64          `mapstructure:"min_contract_duration"`
+	MaxContractDuration int64          `mapstructure:"max_contract_duration"`
+	SubscriptionRate    int64          `mapstructure:"subscription_rate"`
+	PayAsYouGoRate      int64          `mapstructure:"pay-as-you-go_rate"`
 }
 
 type Coordinates struct {

@@ -63,13 +63,11 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 	openContractEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgOpenContract'")
 	closeContractEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgCloseContract'")
 	claimContractIncomeEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgClaimContractIncome'")
-	// openContractEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgOpenContract'")
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 
 	for {
-		txHash := "abc23"
 		select {
 		case evt := <-blockEvents:
 			data, ok := evt.Data.(tmtypes.EventDataNewBlockHeader)
@@ -82,7 +80,7 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 		case evt := <-openContractEvents:
 			log.Debugf("received open contract event")
 			openContractEvent := types.OpenContractEvent{}
-			if err := convertEvent(wsAttributeSource(evt), &openContractEvent, 0, txHash); err != nil {
+			if err := convertEvent(wsAttributeSource(evt), &openContractEvent); err != nil {
 				log.Errorf("error converting open_contract event: %+v", err)
 				break
 			}
@@ -92,7 +90,7 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 		case evt := <-bondProviderEvents:
 			log.Debugf("received bond provider event")
 			bondProviderEvent := types.BondProviderEvent{}
-			if err := convertEvent(wsAttributeSource(evt), &bondProviderEvent, 0, txHash); err != nil {
+			if err := convertEvent(wsAttributeSource(evt), &bondProviderEvent); err != nil {
 				log.Errorf("error converting bond_provider event: %+v", err)
 				break
 			}
@@ -100,7 +98,16 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 				log.Errorf("error handling bond_provider event: %+v", err)
 			}
 		case evt := <-modProviderEvents:
-			log.Debug(evt)
+			log.Debugf("received mod provider event")
+			modProviderEvent := types.ModProviderEvent{}
+			if err := convertEvent(wsAttributeSource(evt), &modProviderEvent); err != nil {
+				log.Errorf("error converting mod_provider event: %+v", err)
+				break
+			}
+			if err := a.handleModProviderEvent(modProviderEvent); err != nil {
+				log.Errorf("error handling mod_provider event: %+v", err)
+			}
+
 			// converted := convertEvent("provider_mod", evt.Events)
 			// converted := convertEvent(wsAttributeSource(evt), "provider_mod", 0, hash)
 			// handleModProviderEvent(a, &converted)
@@ -154,24 +161,21 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 				continue
 			}
 
-			txHash := strings.ToUpper(hex.EncodeToString(transaction.Hash()[:]))
 			for _, event := range txInfo.TxResult.Events {
 				switch event.Type {
 				case "open_contract":
 					openContractEvent := types.OpenContractEvent{}
 					// tmAttributeSource(tx tmtypes.Tx, evt abcitypes.Event, height int64)
-					if err := convertEvent(tmAttributeSource(transaction, event, currentBlock.Block.Height), openContractEvent, currentBlock.Block.Height, txHash); err != nil {
+					if err := convertEvent(tmAttributeSource(transaction, event, currentBlock.Block.Height), openContractEvent); err != nil {
 						log.Errorf("error converting %s event: %+v", event.Type, err)
 						break
 					}
-					// convertedEvent := convertHistoricalEvent(event, txInfo.Height, strings.ToUpper(hex.EncodeToString(transaction.Hash()[:])))
-					// a.handleOpenContractEvent(openContractEvent)
 					if err = a.handleOpenContractEvent(openContractEvent); err != nil {
 						log.Errorf("error handling %s event: %+v", event.Type, err)
 					}
 				case "provider_bond":
 					bondProviderEvent := types.BondProviderEvent{}
-					if err = convertEvent(tmAttributeSource(transaction, event, currentBlock.Block.Height), &bondProviderEvent, currentBlock.Block.Height, txHash); err != nil {
+					if err = convertEvent(tmAttributeSource(transaction, event, currentBlock.Block.Height), &bondProviderEvent); err != nil {
 						log.Errorf("error converting %s event: %+v", event.Type, err)
 						break
 					}
@@ -179,8 +183,14 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 						log.Errorf("error handling %s event: %+v", event.Type, err)
 					}
 				case "provider_mod":
-					convertedEvent := convertHistoricalEvent(event, txInfo.Height, strings.ToUpper(hex.EncodeToString(transaction.Hash()[:])))
-					handleModProviderEvent(a, &convertedEvent)
+					modProviderEvent := types.ModProviderEvent{}
+					if err = convertEvent(tmAttributeSource(transaction, event, currentBlock.Block.Height), &modProviderEvent); err != nil {
+						log.Errorf("error converting %s event: %+v", event.Type, err)
+						break
+					}
+					if err = a.handleModProviderEvent(modProviderEvent); err != nil {
+						log.Errorf("error handling %s event: %+v", event.Type, err)
+					}
 				case "validator_payout":
 					convertedEvent := convertHistoricalEvent(event, txInfo.Height, strings.ToUpper(hex.EncodeToString(transaction.Hash()[:])))
 					a.handleValidatorPayoutEvent(convertedEvent)
@@ -218,7 +228,7 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 }
 
 // copy attributes of map given by attributeFunc() to target which must be a pointer (map/slice implicitly ptr)
-func convertEvent(attributeFunc attributes, target interface{}, height int64, txHash string) error {
+func convertEvent(attributeFunc attributes, target interface{}) error {
 	m := attributeFunc()
 	return mapstructure.WeakDecode(m, target)
 }

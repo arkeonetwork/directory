@@ -3,11 +3,11 @@
 BASEDIR=$(dirname "$0")
 source $BASEDIR/env.sh
 
-CHAIN=btc-mainnet-fullnode
+CHAIN=eth-mainnet-fullnode
 
 USER=alice
 PROVIDER_PUBKEY=$alicekey
-AMT=100000000
+AMT=222
 
 arkeod tx arkeo bond-provider --from $USER -y $PROVIDER_PUBKEY $CHAIN $AMT
 
