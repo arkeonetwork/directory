@@ -10,7 +10,7 @@ func TestInsertIndexerStatus(t *testing.T) {
 		t.Errorf("error getting db: %+v", err)
 	}
 
-	entity, err := db.InsertIndexerStatus(&IndexerStatus{
+	entity, err := db.UpsertIndexerStatus(&IndexerStatus{
 		ID:     0,
 		Height: 55,
 	})

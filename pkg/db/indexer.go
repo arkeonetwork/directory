@@ -12,7 +12,7 @@ type IndexerStatus struct {
 	Height uint64 `db:"height"`
 }
 
-func (d *DirectoryDB) InsertIndexerStatus(indexerStatus *IndexerStatus) (*Entity, error) {
+func (d *DirectoryDB) UpsertIndexerStatus(indexerStatus *IndexerStatus) (*Entity, error) {
 	if indexerStatus == nil {
 		return nil, fmt.Errorf("nil IndexerStatus")
 	}

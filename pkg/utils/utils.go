@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -26,6 +27,16 @@ func ParseCoordinates(coordinates string) (types.Coordinates, error) {
 		return types.Coordinates{}, errors.New("longitude cannot be parsed")
 	}
 	return types.Coordinates{Latitude: latitude, Longitude: longitude}, nil
+}
+
+func ParseContractType(contractType string) (types.ContractType, error) {
+	if types.ContractType(contractType) == types.ContractTypePayAsYouGo {
+		return types.ContractType(contractType), nil
+	} else if types.ContractType(contractType) == types.ContractTypeSubscription {
+		return types.ContractType(contractType), nil
+	} else {
+		return types.ContractTypePayAsYouGo, fmt.Errorf("unexpected contract type %s", contractType)
+	}
 }
 
 func IsNearEqual(a float64, b float64, epsilon float64) bool {

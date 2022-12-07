@@ -1,6 +1,10 @@
 package utils
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/ArkeoNetwork/directory/pkg/types"
+)
 
 func TestParseCoordinates(t *testing.T) {
 	epsilon := .0001
@@ -34,6 +38,33 @@ func TestParseCoordinates(t *testing.T) {
 	coordinateString = "67.3523"
 	coordinates, err = ParseCoordinates(coordinateString)
 	if err == nil {
+		t.FailNow()
+	}
+}
+
+func TestParseContractType(t *testing.T) {
+	contract := "paygo"
+	_, err := ParseContractType(contract)
+	if err == nil {
+		t.FailNow()
+	}
+
+	contract = "PayAsYouGo"
+	contractType, err := ParseContractType(contract)
+	if err != nil {
+		t.FailNow()
+	}
+
+	if contractType != types.ContractTypePayAsYouGo {
+		t.FailNow()
+	}
+
+	contract = "Subscription"
+	contractType, err = ParseContractType(contract)
+	if err != nil {
+		t.FailNow()
+	}
+	if contractType != types.ContractTypeSubscription {
 		t.FailNow()
 	}
 }

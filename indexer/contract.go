@@ -66,11 +66,7 @@ func parseOpenContractEvent(input map[string]string) (types.OpenContractEvent, e
 				return evt, errors.Wrapf(err, "error parsing rate %s", v)
 			}
 		case "type":
-			if types.ContractType(v) == types.ContractTypePayAsYouGo {
-				evt.ContractType = types.ContractType(v)
-			} else if types.ContractType(v) == types.ContractTypeSubscription {
-				evt.ContractType = types.ContractType(v)
-			} else {
+			if evt.ContractType, err = utils.ParseContractType(v); err != nil {
 				return evt, fmt.Errorf("unexpected contract type %s", v)
 			}
 		}
