@@ -155,10 +155,10 @@ func (d *DirectoryDB) SearchProviders(criteria types.ProviderSearchParams) ([]*A
 }
 
 func (d *DirectoryDB) InsertBondProviderEvent(providerID int64, evt types.BondProviderEvent) (*Entity, error) {
-	if evt.BondAbsolute == nil {
+	if evt.BondAbsolute == "" {
 		return nil, fmt.Errorf("nil BondAbsolute")
 	}
-	if evt.BondRelative == nil {
+	if evt.BondRelative == "" {
 		return nil, fmt.Errorf("nil BondRelative")
 	}
 	conn, err := d.getConnection()
@@ -167,7 +167,7 @@ func (d *DirectoryDB) InsertBondProviderEvent(providerID int64, evt types.BondPr
 		return nil, errors.Wrapf(err, "error obtaining db connection")
 	}
 
-	return insert(conn, sqlInsertBondProviderEvent, providerID, evt.Height, evt.TxID, evt.BondRelative.String(), evt.BondAbsolute.String())
+	return insert(conn, sqlInsertBondProviderEvent, providerID, evt.Height, evt.TxID, evt.BondRelative, evt.BondAbsolute)
 }
 
 func (d *DirectoryDB) InsertModProviderEvent(providerID int64, evt types.ModProviderEvent) (*Entity, error) {

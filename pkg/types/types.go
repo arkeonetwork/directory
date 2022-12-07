@@ -1,14 +1,12 @@
 package types
 
-import "math/big"
-
 type BondProviderEvent struct {
-	Pubkey       string
-	Chain        string
-	Height       int64
-	TxID         string
-	BondRelative *big.Int
-	BondAbsolute *big.Int
+	Pubkey       string `mapstructure:"pubkey"`
+	Chain        string `mapstructure:"chain"`
+	Height       int64  `mapstructure:"height"`
+	TxID         string `mapstructure:"txID"`
+	BondRelative string `mapstructure:"bond_rel"`
+	BondAbsolute string `mapstructure:"bond_abs"`
 }
 
 type ContractType string
@@ -19,16 +17,16 @@ var (
 )
 
 type OpenContractEvent struct {
-	ProviderPubkey string
-	Chain          string
-	ClientPubkey   string
-	DelegatePubkey string
-	TxID           string
-	ContractType   ContractType
-	Height         int64
-	Duration       int64
-	Rate           int64
-	OpenCost       int64
+	ProviderPubkey string       `mapstructure:"pubkey"`
+	Chain          string       `mapstructure:"chain"`
+	ClientPubkey   string       `mapstructure:"client"`
+	DelegatePubkey string       `mapstructure:"client"`
+	TxID           string       `mapstructure:"txID"`
+	ContractType   ContractType `mapstructure:"type"`
+	Height         int64        `mapstructure:"height"`
+	Duration       int64        `mapstructure:"duration"`
+	Rate           int64        `mapstructure:"rate"`
+	OpenCost       int64        `mapstructure:"open_cost"`
 }
 
 type ContractSettlementEvent struct {

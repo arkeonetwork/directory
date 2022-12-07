@@ -2,7 +2,6 @@ package indexer
 
 import (
 	"fmt"
-	"math/big"
 	"net/url"
 	"strconv"
 
@@ -49,8 +48,8 @@ func (a *IndexerApp) handleBondProviderEvent(evt types.BondProviderEvent) error 
 			return errors.Wrapf(err, "error creating provider %s chain %s", evt.Pubkey, evt.Chain)
 		}
 	} else {
-		if evt.BondAbsolute != nil {
-			provider.Bond = evt.BondAbsolute.String()
+		if evt.BondAbsolute != "" {
+			provider.Bond = evt.BondAbsolute
 		}
 		if _, err = a.db.UpdateProvider(provider); err != nil {
 			return errors.Wrapf(err, "error updating provider for bond event %s chain %s", evt.Pubkey, evt.Chain)
@@ -66,7 +65,7 @@ func (a *IndexerApp) handleBondProviderEvent(evt types.BondProviderEvent) error 
 
 func (a *IndexerApp) createProvider(evt types.BondProviderEvent) (*db.ArkeoProvider, error) {
 	// new provider for chain, insert
-	provider := &db.ArkeoProvider{Pubkey: evt.Pubkey, Chain: evt.Chain, Bond: evt.BondAbsolute.String()}
+	provider := &db.ArkeoProvider{Pubkey: evt.Pubkey, Chain: evt.Chain, Bond: evt.BondAbsolute}
 	entity, err := a.db.InsertProvider(provider)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error inserting provider %s %s", evt.Pubkey, evt.Chain)
@@ -97,41 +96,41 @@ func validateProviderStatus(s string) bool {
 	}
 }
 
-func parseBondProviderEvent(input map[string]string) (types.BondProviderEvent, error) {
-	var err error
-	var ok bool
-	evt := types.BondProviderEvent{}
+// func parseBondProviderEvent(input map[string]string) (types.BondProviderEvent, error) {
+// 	var err error
+// 	var ok bool
+// 	evt := types.BondProviderEvent{}
 
-	for k, v := range input {
-		switch k {
-		case "pubkey":
-			evt.Pubkey = v
-		case "chain":
-			if ok = utils.ValidateChain(v); !ok {
-				return evt, fmt.Errorf("invalid chain %s", v)
-			}
-			evt.Chain = v
-		case "txID":
-			evt.TxID = v
-		case "height":
-			if evt.Height, err = strconv.ParseInt(v, 10, 64); err != nil {
-				return evt, errors.Wrapf(err, "error parsing height %s", v)
-			}
-		case "bond_rel":
-			evt.BondRelative, ok = new(big.Int).SetString(v, 10)
-			if !ok {
-				return evt, fmt.Errorf("cannot parse %s as int", v)
-			}
-		case "bond_abs":
-			evt.BondAbsolute, ok = new(big.Int).SetString(v, 10)
-			if !ok {
-				return evt, fmt.Errorf("cannot parse %s as int", v)
-			}
-		}
-	}
+// 	for k, v := range input {
+// 		switch k {
+// 		case "pubkey":
+// 			evt.Pubkey = v
+// 		case "chain":
+// 			if ok = utils.ValidateChain(v); !ok {
+// 				return evt, fmt.Errorf("invalid chain %s", v)
+// 			}
+// 			evt.Chain = v
+// 		case "txID":
+// 			evt.TxID = v
+// 		case "height":
+// 			if evt.Height, err = strconv.ParseInt(v, 10, 64); err != nil {
+// 				return evt, errors.Wrapf(err, "error parsing height %s", v)
+// 			}
+// 		case "bond_rel":
+// 			evt.BondRelative, ok = new(big.Int).SetString(v, 10)
+// 			if !ok {
+// 				return evt, fmt.Errorf("cannot parse %s as int", v)
+// 			}
+// 		case "bond_abs":
+// 			evt.BondAbsolute, ok = new(big.Int).SetString(v, 10)
+// 			if !ok {
+// 				return evt, fmt.Errorf("cannot parse %s as int", v)
+// 			}
+// 		}
+// 	}
 
-	return evt, nil
-}
+// 	return evt, nil
+// }
 
 func parseModProviderEvent(input map[string]string) (types.ModProviderEvent, error) {
 	var err error
