@@ -3,10 +3,9 @@
 KEY_RAW=$(arkeod keys show alice -p | jq -r .key)
 PUBKEY=$(arkeod debug pubkey-raw "$KEY_RAW" | grep "Bech32 Acc" | awk '{ print $NF }')
 
-alicekey=$PUBKEY
-
+export alicekey=$PUBKEY
+echo "alicekey:***** $alicekey"
 KEY_RAW=$(arkeod keys show bob -p | jq -r .key)
 PUBKEY=$(arkeod debug pubkey-raw "$KEY_RAW" | grep "Bech32 Acc" | awk '{ print $NF }')
 
-bobkey=$PUBKEY
-
+export bobkey=$PUBKEY

@@ -26,7 +26,7 @@ sleep 6
 # Usage:
 #   arkeod tx arkeo open-contract [provider_pubkey] [chain] [client_pubkey] [c-type] [deposit] [duration] [rate] [delegation-optional] [flags]
 # arkeod tx arkeo open-contract $alicekey btc-mainnet-fullnode $bobkey 1 60 10 20 --from bob -y
-arkeod tx arkeo open-contract $alicekey eth-mainnet-fullnode $bobkey 1 60 10 20 --from bob -y
+arkeod tx arkeo open-contract $alicekey eth-mainnet-fullnode $bobkey 1 60 100 20 --from bob -y
 
 sleep 6
 

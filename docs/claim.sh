@@ -3,7 +3,7 @@
 source ./env.sh
 
 # increment each invocation
-NONCE=7
+NONCE=10
 CHAIN=eth-mainnet-fullnode
 
 USER=bob

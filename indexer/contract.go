@@ -6,6 +6,7 @@ import (
 
 	"github.com/ArkeoNetwork/directory/pkg/types"
 	"github.com/ArkeoNetwork/directory/pkg/utils"
+	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 )
 
@@ -26,6 +27,14 @@ func (a *IndexerApp) handleOpenContractEvent(evt types.OpenContractEvent) error 
 	}
 
 	log.Infof("update finished for contract %d", ent.ID)
+	return nil
+}
+
+func parseEvent(input map[string]string, target interface{}) error {
+	if err := mapstructure.WeakDecode(input, target); err != nil {
+		return errors.Wrapf(err, "error reflecting properties to target")
+	}
+
 	return nil
 }
 
