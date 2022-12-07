@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/ArkeoNetwork/directory/pkg/db"
 	"github.com/ArkeoNetwork/directory/pkg/types"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
@@ -230,6 +231,16 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 		blocksSynced++
 		if blocksSynced%500 == 0 {
 			log.Debugf("synced %d of initial %d", blocksSynced, blocksToSync)
+
+			// update DB periodically to avoid having to sync all over
+			indexerStatus := db.IndexerStatus{
+				ID:     a.params.IndexerID,
+				Height: uint64(nextHeight),
+			}
+			_, err := a.db.UpsertIndexerStatus(&indexerStatus)
+			if err != nil {
+				log.Warnf("error writing block status to db %#v", err)
+			}
 		}
 
 		a.Height++
