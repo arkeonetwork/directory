@@ -6,6 +6,7 @@ import (
 
 	"github.com/ArkeoNetwork/directory/pkg/types"
 	"github.com/ArkeoNetwork/directory/pkg/utils"
+	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 )
 
@@ -27,6 +28,32 @@ func (a *IndexerApp) handleOpenContractEvent(evt types.OpenContractEvent) error 
 
 	log.Infof("update finished for contract %d", ent.ID)
 	return nil
+}
+
+func parseContractSettlementEvent(input map[string]string) (types.ContractSettlementEvent, error) {
+	ve := types.ContractSettlementEvent{}
+	if err := mapstructure.Decode(input, &ve); err != nil {
+		return ve, errors.Wrapf(err, "error reflecting properties to contract settlement event")
+	}
+	log.Infof("ve: %#v", ve)
+	return ve, nil
+}
+
+func parseEvent(input map[string]string, target interface{}) error {
+	if err := mapstructure.Decode(input, target); err != nil {
+		return errors.Wrapf(err, "error reflecting properties to target")
+	}
+
+	return nil
+}
+
+func parseValidatorPayoutEvent(input map[string]string) (types.ValidatorPayoutEvent, error) {
+	ve := types.ValidatorPayoutEvent{}
+	if err := mapstructure.Decode(input, &ve); err != nil {
+		return ve, errors.Wrapf(err, "error reflecting properties to validator payout event")
+	}
+	log.Infof("ve: %#v", ve)
+	return ve, nil
 }
 
 func parseOpenContractEvent(input map[string]string) (types.OpenContractEvent, error) {

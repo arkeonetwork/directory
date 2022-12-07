@@ -31,6 +31,21 @@ type OpenContractEvent struct {
 	OpenCost       int64
 }
 
+type ContractSettlementEvent struct {
+	ProviderPubkey string `mapstructure:"pubkey"`
+	Chain          string `mapstructure:"chain"`
+	ClientPubkey   string `mapstructure:"client"`
+	Paid           string `mapstructure:"paid"`
+	Height         string `mapstructure:"height"`
+	Nonce          string `mapstructure:"nonce"`
+	Reserve        string `mapstructure:"reserve"`
+}
+
+type ValidatorPayoutEvent struct {
+	Validator string `mapstructure:"validator"`
+	Paid      string `mapstructure:"paid"`
+}
+
 type ProviderStatus string
 
 var (

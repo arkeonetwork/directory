@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/ArkeoNetwork/directory/pkg/types"
 	"github.com/pkg/errors"
 
 	abcitypes "github.com/tendermint/tendermint/abci/types"
@@ -20,9 +21,13 @@ import (
 
 func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 	blockEvents := subscribe(client, "tm.event = 'NewBlockHeader'")
-	bondProviderEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgBondProvider'")
+	bondProviderEvents := make(chan int) // := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgBondProvider'")
 	modProviderEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgModProvider'")
 	openContractEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgOpenContract'")
+	closeContractEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgCloseContract'")
+	claimContractIncomeEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgClaimContractIncome'")
+	// openContractEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgOpenContract'")
+
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 
@@ -41,11 +46,18 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 			converted := convertWebSocketEvent("open_contract", evt.Events)
 			handleOpenContractEvent(a, &converted)
 		case evt := <-bondProviderEvents:
-			converted := convertWebSocketEvent("provider_bond", evt.Events)
-			handleBondProviderEvent(a, &converted)
+			log.Debug(evt)
+			// converted := convertWebSocketEvent("provider_bond", evt.Events)
+			// handleBondProviderEvent(a, &converted)
 		case evt := <-modProviderEvents:
 			converted := convertWebSocketEvent("provider_mod", evt.Events)
 			handleModProviderEvent(a, &converted)
+		case evt := <-claimContractIncomeEvents:
+			converted := convertWebSocketEvent("claim_contract_income", evt.Events)
+			a.handleClaimContractIncomeEvent(converted)
+		case evt := <-closeContractEvents:
+			converted := convertWebSocketEvent("close_contract", evt.Events)
+			log.Infof("close_contract: %#v", converted)
 		case <-quit:
 			log.Infof("received os quit signal")
 			return nil
@@ -96,6 +108,20 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 				case "provider_mod":
 					convertedEvent := convertHistoricalEvent(event, txInfo.Height, strings.ToUpper(hex.EncodeToString(transaction.Hash()[:])))
 					handleModProviderEvent(a, &convertedEvent)
+				case "validator_payout":
+					convertedEvent := convertHistoricalEvent(event, txInfo.Height, strings.ToUpper(hex.EncodeToString(transaction.Hash()[:])))
+					a.handleValidatorPayoutEvent(&convertedEvent)
+				case "contract_settlement":
+					convertedEvent := convertHistoricalEvent(event, txInfo.Height, strings.ToUpper(hex.EncodeToString(transaction.Hash()[:])))
+					a.handleContractSettlement(&convertedEvent)
+				case "close_contract":
+					convertedEvent := convertHistoricalEvent(event, txInfo.Height, strings.ToUpper(hex.EncodeToString(transaction.Hash()[:])))
+					log.Warnf("close_contract event: %#v", convertedEvent)
+				case "claim_contract_income":
+					convertedEvent := convertHistoricalEvent(event, txInfo.Height, strings.ToUpper(hex.EncodeToString(transaction.Hash()[:])))
+					log.Warnf("claim_contract_income event: %#v", convertedEvent)
+				default:
+					log.Warnf("received event %s", event.Type)
 				}
 			}
 		}
@@ -173,6 +199,42 @@ func handleBondProviderEvent(a *IndexerApp, convertedEvent *map[string]string) {
 		log.Errorf("error handling provider bond event: %+v", err)
 		return
 	}
+}
+
+func (a *IndexerApp) handleClaimContractIncomeEvent(event map[string]string) {
+	contractSettlement := types.ContractSettlementEvent{}
+	err := parseEvent(event, &contractSettlement)
+	if err != nil {
+		log.Errorf("error parsing contractSettlement: %+v", err)
+		return
+	}
+	log.Infof("captured contractSettlement %#v", contractSettlement)
+}
+
+func (a *IndexerApp) handleContractSettlement(event *map[string]string) {
+
+	contractSettlement, err := parseContractSettlementEvent(*event)
+	if err != nil {
+		log.Errorf("error parsing contractSettlement: %+v", err)
+		return
+	}
+	log.Infof("captured contractSettlement %#v", contractSettlement)
+}
+
+func (a *IndexerApp) handleValidatorPayoutEvent(event *map[string]string) {
+
+	payoutEvent, err := parseValidatorPayoutEvent(*event)
+	if err != nil {
+		log.Errorf("error parsing validatorPayoutEvent: %+v", err)
+		return
+	}
+	log.Infof("captured payoutEvent %#v", payoutEvent)
+	// openContractEvent, err := parseOpenContractEvent(*convertedEvent)
+
+	// if err = a.handleOpenContractEvent(openContractEvent); err != nil {
+	// 	log.Errorf("error handling open contract event: %+v", err)
+	// 	return
+	// }
 }
 
 func handleOpenContractEvent(a *IndexerApp, convertedEvent *map[string]string) {
