@@ -1,14 +1,12 @@
 package types
 
-import "math/big"
-
 type BondProviderEvent struct {
-	Pubkey       string
-	Chain        string
-	Height       int64
-	TxID         string
-	BondRelative *big.Int
-	BondAbsolute *big.Int
+	Pubkey       string `mapstructure:"pubkey"`
+	Chain        string `mapstructure:"chain"`
+	Height       int64  `mapstructure:"height"`
+	TxID         string `mapstructure:"hash"`
+	BondRelative string `mapstructure:"bond_rel"`
+	BondAbsolute string `mapstructure:"bond_abs"`
 }
 
 type ContractType string
@@ -19,16 +17,44 @@ var (
 )
 
 type OpenContractEvent struct {
-	ProviderPubkey string
-	Chain          string
-	ClientPubkey   string
-	DelegatePubkey string
-	TxID           string
-	ContractType   ContractType
-	Height         int64
-	Duration       int64
-	Rate           int64
-	OpenCost       int64
+	ProviderPubkey string       `mapstructure:"pubkey"`
+	Chain          string       `mapstructure:"chain"`
+	ClientPubkey   string       `mapstructure:"client"`
+	DelegatePubkey string       `mapstructure:"client"`
+	TxID           string       `mapstructure:"hash"`
+	ContractType   ContractType `mapstructure:"type"`
+	Height         int64        `mapstructure:"height"`
+	Duration       int64        `mapstructure:"duration"`
+	Rate           int64        `mapstructure:"rate"`
+	OpenCost       int64        `mapstructure:"open_cost"`
+}
+
+type ContractSettlementEvent struct {
+	ProviderPubkey string `mapstructure:"pubkey"`
+	Chain          string `mapstructure:"chain"`
+	ClientPubkey   string `mapstructure:"client"`
+	TxID           string `mapstructure:"hash"`
+	Paid           string `mapstructure:"paid"`
+	Height         string `mapstructure:"height"`
+	Nonce          string `mapstructure:"nonce"`
+	Reserve        string `mapstructure:"reserve"`
+}
+
+type ClaimContractIncomeEvent struct {
+	Pubkey       string `mapstructure:"pubkey"`
+	Chain        string `mapstructure:"chain"`
+	ClientPubkey string `mapstructure:"client"` // could be delegate?
+	Height       int64  `mapstructure:"height"`
+	TxID         string `mapstructure:"hash"`
+	Paid         string `mapstructure:"paid"`
+	Nonce        string `mapstructure:"nonce"`
+	Reserve      string `mapstructure:"reserve"`
+}
+
+type ValidatorPayoutEvent struct {
+	Validator string `mapstructure:"validator"`
+	TxID      string `mapstructure:"hash"`
+	Paid      string `mapstructure:"paid"`
 }
 
 type ProviderStatus string
@@ -39,17 +65,17 @@ var (
 )
 
 type ModProviderEvent struct {
-	Pubkey              string
-	Chain               string
-	Height              int64
-	TxID                string
-	MetadataURI         string
-	MetadataNonce       uint64
-	Status              ProviderStatus
-	MinContractDuration int64
-	MaxContractDuration int64
-	SubscriptionRate    int64
-	PayAsYouGoRate      int64
+	Pubkey              string         `mapstructure:"pubkey"`
+	Chain               string         `mapstructure:"chain"`
+	Height              int64          `mapstructure:"height"`
+	TxID                string         `mapstructure:"hash"`
+	MetadataURI         string         `mapstructure:"metadata_uri"`
+	MetadataNonce       uint64         `mapstructure:"metadata_nonce"`
+	Status              ProviderStatus `mapstructure:"status"`
+	MinContractDuration int64          `mapstructure:"min_contract_duration"`
+	MaxContractDuration int64          `mapstructure:"max_contract_duration"`
+	SubscriptionRate    int64          `mapstructure:"subscription_rate"`
+	PayAsYouGoRate      int64          `mapstructure:"pay-as-you-go_rate"`
 }
 
 type Coordinates struct {
