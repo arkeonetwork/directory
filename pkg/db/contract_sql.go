@@ -29,4 +29,11 @@ var (
 		contract_type,height,txid,duration,rate,open_cost)
 	values ($1,$2,$3,$4,$5,$6,$7,$8) returning id, created, updated
 	`
+	sqlUpsertContractSettlementEvent = `
+	insert into contract_settlement_events(contract_id,txid,client_pubkey,height,nonce,paid,reserve)
+	values ($1,$2,$3,$4,$5,$6,$7)
+	on conflict on constraint contract_settlement_events_txid_key
+	do update set updated = now()
+	returning id, created, updated
+`
 )

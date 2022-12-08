@@ -4,7 +4,7 @@ BASEDIR=$(dirname "$0")
 source $BASEDIR/env.sh
 
 # increment each invocation
-NONCE=11
+NONCE=13
 CHAIN=eth-mainnet-fullnode
 
 USER=bob

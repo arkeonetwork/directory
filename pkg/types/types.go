@@ -30,24 +30,13 @@ type OpenContractEvent struct {
 }
 
 type ContractSettlementEvent struct {
-	ProviderPubkey string `mapstructure:"pubkey"`
-	Chain          string `mapstructure:"chain"`
-	ClientPubkey   string `mapstructure:"client"`
-	TxID           string `mapstructure:"hash"`
-	Paid           string `mapstructure:"paid"`
-	Height         string `mapstructure:"height"`
-	Nonce          string `mapstructure:"nonce"`
-	Reserve        string `mapstructure:"reserve"`
-}
-
-type ClaimContractIncomeEvent struct {
 	Pubkey       string `mapstructure:"pubkey"`
 	Chain        string `mapstructure:"chain"`
 	ClientPubkey string `mapstructure:"client"` // could be delegate?
-	Height       int64  `mapstructure:"height"`
 	TxID         string `mapstructure:"hash"`
-	Paid         string `mapstructure:"paid"`
+	Height       int64  `mapstructure:"height"`
 	Nonce        string `mapstructure:"nonce"`
+	Paid         string `mapstructure:"paid"`
 	Reserve      string `mapstructure:"reserve"`
 }
 
