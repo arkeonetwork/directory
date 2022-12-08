@@ -68,3 +68,25 @@ func TestParseContractType(t *testing.T) {
 		t.FailNow()
 	}
 }
+
+func TestDownloadProviderMetadata(t *testing.T) {
+	uri := "https://raw.githubusercontent.com/ArkeoNetwork/directory/main/docs/sample-metadata.json"
+	metadata, err := DownloadProviderMetadata(uri, 5, 1e6)
+	if metadata == nil {
+		t.FailNow()
+	}
+
+	if err != nil {
+		t.FailNow()
+	}
+
+	if metadata.Version == "" {
+		t.FailNow()
+	}
+
+	_, err = DownloadProviderMetadata(uri, 5, 1)
+	if err == nil {
+		t.FailNow()
+	}
+
+}
