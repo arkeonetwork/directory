@@ -38,20 +38,22 @@ func (a *IndexerApp) handleModProviderEvent(evt types.ModProviderEvent) error {
 		return errors.Wrapf(err, "error inserting ModProviderEvent for %s chain %s", evt.Pubkey, evt.Chain)
 	}
 
-	if isMetaDataUpdated {
-		log.Debugf("updating provider metadata for provider %s", provider.Pubkey)
-		if !validateMetadataURI(provider.MetadataURI) {
-			log.Warnf("updating provider metadata for provider %s failed due to bad MetadataURI %s", provider.MetadataURI)
-			return nil
-		}
-		providerMetadata, err := utils.DownloadProviderMetadata(provider.MetadataURI, 5, 1e6)
-		if err != nil {
-			log.Warnf("updating provider metadata for provider %s failed %v", err)
-			return nil
-		}
-		if _, err = a.db.UpsertProviderMetadata(provider.ID, *providerMetadata); err != nil {
-			return errors.Wrapf(err, "error updating provider metadta for mod event %s chain %s", provider.Pubkey, provider.Chain)
-		}
+	if !isMetaDataUpdated {
+		return nil
+	}
+
+	log.Debugf("updating provider metadata for provider %s", provider.Pubkey)
+	if !validateMetadataURI(provider.MetadataURI) {
+		log.Warnf("updating provider metadata for provider %s failed due to bad MetadataURI %s", provider.MetadataURI)
+		return nil
+	}
+	providerMetadata, err := utils.DownloadProviderMetadata(provider.MetadataURI, 5, 1e6)
+	if err != nil {
+		log.Warnf("updating provider metadata for provider %s failed %v", err)
+		return nil
+	}
+	if _, err = a.db.UpsertProviderMetadata(provider.ID, *providerMetadata); err != nil {
+		return errors.Wrapf(err, "error updating provider metadta for mod event %s chain %s", provider.Pubkey, provider.Chain)
 	}
 	return nil
 }
