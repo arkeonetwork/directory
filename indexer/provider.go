@@ -20,10 +20,6 @@ func (a *IndexerApp) handleModProviderEvent(evt types.ModProviderEvent) error {
 	}
 
 	isMetaDataUpdated := provider.MetadataNonce != evt.MetadataNonce
-	if !validateMetadataURI(evt.MetadataURI) {
-		return fmt.Errorf("invalid metadata uri: %s", evt.MetadataURI)
-	}
-
 	provider.MetadataURI = evt.MetadataURI
 	provider.MetadataNonce = evt.MetadataNonce
 	provider.Status = evt.Status
