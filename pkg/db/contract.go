@@ -47,6 +47,17 @@ func (d *DirectoryDB) UpsertContract(providerID int64, evt types.OpenContractEve
 		evt.Duration, evt.Rate, evt.OpenCost, evt.Height)
 }
 
+func (d *DirectoryDB) UpsertContractSettlementEvent(contractID int64, evt types.ContractSettlementEvent) (*Entity, error) {
+	conn, err := d.getConnection()
+	defer conn.Release()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error obtaining db connection")
+	}
+
+	return upsert(conn, sqlUpsertContractSettlementEvent, contractID, evt.TxID, evt.ClientPubkey, evt.Height,
+		evt.Nonce, evt.Paid, evt.Reserve)
+}
+
 func (d *DirectoryDB) InsertOpenContractEvent(contractID int64, evt types.OpenContractEvent) (*Entity, error) {
 	conn, err := d.getConnection()
 	defer conn.Release()
@@ -54,6 +65,6 @@ func (d *DirectoryDB) InsertOpenContractEvent(contractID int64, evt types.OpenCo
 		return nil, errors.Wrapf(err, "error obtaining db connection")
 	}
 
-	return insert(conn, sqlInsertOpenContractEvent, contractID, evt.ClientPubkey, evt.ContractType, evt.Height, evt.TxID,
+	return insert(conn, sqlUpsertOpenContractEvent, contractID, evt.ClientPubkey, evt.ContractType, evt.Height, evt.TxID,
 		evt.Duration, evt.Rate, evt.OpenCost)
 }

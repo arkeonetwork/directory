@@ -65,6 +65,8 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 	openContractEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgOpenContract'")
 	closeContractEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgCloseContract'")
 	claimContractIncomeEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgClaimContractIncome'")
+	// contract_settlement
+	// contractSettlementEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgClaimContractIncome'")
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
@@ -83,7 +85,7 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 			log.Debugf("received open contract event")
 			openContractEvent := types.OpenContractEvent{}
 			if err := convertEvent(wsAttributeSource(evt), &openContractEvent); err != nil {
-				log.Errorf("error converting open_contract event: %+v", err)
+				log.Errorf("error converting open_contract event HAPPENING result must be a pointer: %+v", err)
 				break
 			}
 			if err := a.handleOpenContractEvent(openContractEvent); err != nil {
@@ -111,12 +113,12 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 			}
 		case evt := <-claimContractIncomeEvents:
 			log.Debugf("received claim contract income event")
-			claimContractIncomeEvent := types.ClaimContractIncomeEvent{}
-			if err := convertEvent(wsAttributeSource(evt), &claimContractIncomeEvent); err != nil {
+			contractSettlementEvent := types.ContractSettlementEvent{}
+			if err := convertEvent(wsAttributeSource(evt), &contractSettlementEvent); err != nil {
 				log.Errorf("error converting open_contract event: %+v", err)
 				break
 			}
-			if err := a.handleClaimContractIncomeEvent(claimContractIncomeEvent); err != nil {
+			if err := a.handleContractSettlementEvent(contractSettlementEvent); err != nil {
 				log.Errorf("error handling claim contract income event: %+v", err)
 			}
 		// converted := convertEvent("claim_contract_income", evt.Events)
@@ -171,7 +173,7 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 				case "open_contract":
 					openContractEvent := types.OpenContractEvent{}
 					// tmAttributeSource(tx tmtypes.Tx, evt abcitypes.Event, height int64)
-					if err := convertEvent(tmAttributeSource(transaction, event, currentBlock.Block.Height), openContractEvent); err != nil {
+					if err := convertEvent(tmAttributeSource(transaction, event, currentBlock.Block.Height), &openContractEvent); err != nil {
 						log.Errorf("error converting %s event: %+v", event.Type, err)
 						break
 					}
@@ -197,32 +199,43 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 						log.Errorf("error handling %s event: %+v", event.Type, err)
 					}
 				case "claim_contract_income":
-					claimContractIncomeEvent := types.ClaimContractIncomeEvent{}
-					if err := convertEvent(tmAttributeSource(transaction, event, currentBlock.Block.Height), &claimContractIncomeEvent); err != nil {
-						log.Errorf("error converting open_contract event: %+v", err)
+					contractSettlementEvent := types.ContractSettlementEvent{}
+					if err := convertEvent(tmAttributeSource(transaction, event, currentBlock.Block.Height), &contractSettlementEvent); err != nil {
+						log.Errorf("error converting claim_contract_income event: %+v", err)
 						break
 					}
-					if err := a.handleClaimContractIncomeEvent(claimContractIncomeEvent); err != nil {
+					if err := a.handleContractSettlementEvent(contractSettlementEvent); err != nil {
 						log.Errorf("error handling claim contract income event: %+v", err)
 					}
 				case "validator_payout":
-					convertedEvent := convertHistoricalEvent(event, txInfo.Height, strings.ToUpper(hex.EncodeToString(transaction.Hash()[:])))
-					a.handleValidatorPayoutEvent(convertedEvent)
-				case "contract_settlement":
-					claimContractIncomeEvent := types.ClaimContractIncomeEvent{}
-					if err := convertEvent(tmAttributeSource(transaction, event, currentBlock.Block.Height), &claimContractIncomeEvent); err != nil {
-						log.Errorf("error converting open_contract event: %+v", err)
+					validatorPayoutEvent := types.ValidatorPayoutEvent{}
+					if err := convertEvent(tmAttributeSource(transaction, event, currentBlock.Block.Height), &validatorPayoutEvent); err != nil {
+						log.Errorf("error converting validatorPayoutEvent event: %+v", err)
 						break
 					}
-					if err := a.handleClaimContractIncomeEvent(claimContractIncomeEvent); err != nil {
+					if err := a.handleValidatorPayoutEvent(validatorPayoutEvent); err != nil {
 						log.Errorf("error handling claim contract income event: %+v", err)
 					}
-					// convertedEvent := convertHistoricalEvent(event, txInfo.Height, strings.ToUpper(hex.EncodeToString(transaction.Hash()[:])))
-					// a.handleContractSettlement(&convertedEvent)
+				case "contract_settlement":
+					contractSettlementEvent := types.ContractSettlementEvent{}
+					if err := convertEvent(tmAttributeSource(transaction, event, currentBlock.Block.Height), &contractSettlementEvent); err != nil {
+						log.Errorf("error converting contractSettlementEvent: %+v", err)
+						break
+					}
+					if err := a.handleContractSettlementEvent(contractSettlementEvent); err != nil {
+						log.Errorf("error handling contractSettlementEvent: %+v", err)
+					}
 				case "close_contract":
-					convertedEvent := convertHistoricalEvent(event, txInfo.Height, strings.ToUpper(hex.EncodeToString(transaction.Hash()[:])))
-					log.Warnf("close_contract event: %#v", convertedEvent)
-
+					// convertedEvent := convertHistoricalEvent(event, txInfo.Height, strings.ToUpper(hex.EncodeToString(transaction.Hash()[:])))
+					// log.Warnf("close_contract event: %#v", convertedEvent)
+					contractSettlementEvent := types.ContractSettlementEvent{}
+					if err := convertEvent(tmAttributeSource(transaction, event, currentBlock.Block.Height), &contractSettlementEvent); err != nil {
+						log.Errorf("error converting close_contract: %+v", err)
+						break
+					}
+					if err := a.handleContractSettlementEvent(contractSettlementEvent); err != nil {
+						log.Errorf("error handling close_contract: %+v", err)
+					}
 				default:
 					log.Warnf("received event %s", event.Type)
 				}
@@ -259,25 +272,7 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 
 // copy attributes of map given by attributeFunc() to target which must be a pointer (map/slice implicitly ptr)
 func convertEvent(attributeFunc attributes, target interface{}) error {
-	m := attributeFunc()
-	return mapstructure.WeakDecode(m, target)
-}
-
-func parseEvent(input map[string]string, target interface{}) error {
-	if err := mapstructure.WeakDecode(input, target); err != nil {
-		return errors.Wrapf(err, "error reflecting properties to target")
-	}
-	return nil
-}
-
-func convertHistoricalEvent(event abcitypes.Event, height int64, txHash string) map[string]string {
-	newEvt := make(map[string]string, 0)
-	for _, attr := range event.Attributes {
-		newEvt[string(attr.Key)] = string(attr.Value)
-	}
-	newEvt["height"] = strconv.FormatInt(height, 10)
-	newEvt["txID"] = txHash
-	return newEvt
+	return mapstructure.WeakDecode(attributeFunc(), target)
 }
 
 func subscribe(client *tmclient.HTTP, query string) <-chan ctypes.ResultEvent {
@@ -289,55 +284,6 @@ func subscribe(client *tmclient.HTTP, query string) <-chan ctypes.ResultEvent {
 	return out
 }
 
-// func handleBondProviderEvent(a *IndexerApp, convertedEvent *map[string]string) {
-// 	bondProviderEvent, err := parseBondProviderEvent(*convertedEvent)
-// 	if err != nil {
-// 		log.Errorf("error parsing bondProviderEvent: %+v", err)
-// 		return
-// 	}
-// 	if err = a.handleBondProviderEvent(bondProviderEvent); err != nil {
-// 		log.Errorf("error handling provider bond event: %+v", err)
-// 		return
-// 	}
-// }
-
-func (a *IndexerApp) handleClaimContractIncomeEvent(evt types.ClaimContractIncomeEvent) error {
-	log.Infof("captured claimContractIncomeEvent %#v", evt)
-	provider, err := a.db.FindProvider(evt.Pubkey, evt.Chain)
-	if err != nil {
-		return errors.Wrapf(err, "error finding provider %s for chain %s", evt.Pubkey, evt.Chain)
-	}
-	if provider == nil {
-		return fmt.Errorf("cannot claim income provider %s on chain %s DNE", evt.Pubkey, evt.Chain)
-	}
-	contract, err := a.db.FindContract(provider.ID, evt.ClientPubkey)
-	if err != nil {
-		return errors.Wrapf(err, "error finding contract provider %s chain %s", evt.Pubkey, evt.Chain)
-	}
-	contract.Updated = time.Now()
-	// contract.Paid = evt.Paid
-	return fmt.Errorf("not done: %s", evt.Paid)
-}
-
-func (a *IndexerApp) handleContractSettlement(event *map[string]string) {
-
-	// contractSettlement, err := parseContractSettlementEvent(*event)
-	contractSettlement := types.ContractSettlementEvent{}
-	err := parseEvent(*event, &contractSettlement)
-	if err != nil {
-		log.Errorf("error parsing contractSettlement: %+v", err)
-		return
-	}
-	log.Infof("captured contractSettlement %#v", contractSettlement)
-}
-
-func (a *IndexerApp) handleValidatorPayoutEvent(event map[string]string) {
-
-	payoutEvent := types.ValidatorPayoutEvent{}
-	err := parseEvent(event, payoutEvent)
-	if err != nil {
-		log.Errorf("error parsing validatorPayoutEvent: %+v", err)
-		return
-	}
-	log.Infof("captured payoutEvent %#v", payoutEvent)
+func (a *IndexerApp) handleValidatorPayoutEvent(event types.ValidatorPayoutEvent) error {
+	return fmt.Errorf("not impl")
 }
