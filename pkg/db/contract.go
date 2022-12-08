@@ -58,7 +58,7 @@ func (d *DirectoryDB) UpsertContractSettlementEvent(contractID int64, evt types.
 		evt.Nonce, evt.Paid, evt.Reserve)
 }
 
-func (d *DirectoryDB) InsertOpenContractEvent(contractID int64, evt types.OpenContractEvent) (*Entity, error) {
+func (d *DirectoryDB) UpsertOpenContractEvent(contractID int64, evt types.OpenContractEvent) (*Entity, error) {
 	conn, err := d.getConnection()
 	defer conn.Release()
 	if err != nil {

@@ -19,7 +19,7 @@ func (a *IndexerApp) handleOpenContractEvent(evt types.OpenContractEvent) error 
 	if err != nil {
 		return errors.Wrapf(err, "error upserting contract")
 	}
-	if _, err = a.db.InsertOpenContractEvent(ent.ID, evt); err != nil {
+	if _, err = a.db.UpsertOpenContractEvent(ent.ID, evt); err != nil {
 		return errors.Wrapf(err, "error inserting open contract event")
 	}
 
@@ -40,7 +40,9 @@ func (a *IndexerApp) handleContractSettlementEvent(evt types.ContractSettlementE
 	if err != nil {
 		return errors.Wrapf(err, "error finding contract provider %s chain %s", evt.Pubkey, evt.Chain)
 	}
-
+	if contract == nil {
+		return fmt.Errorf("no contract found for %s:%s delegPub: %s", evt.Pubkey, evt.Chain, evt.ClientPubkey)
+	}
 	if _, err = a.db.UpsertContractSettlementEvent(contract.ID, evt); err != nil {
 		return errors.Wrapf(err, "error upserting contract settlement event")
 	}

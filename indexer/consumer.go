@@ -48,12 +48,13 @@ func wsAttributeSource(src ctypes.ResultEvent) func() map[string]string {
 	return func() map[string]string { return results }
 }
 
-func tmAttributeSource(tx tmtypes.Tx, evt abcitypes.Event, height int64) func() map[string]string {
+func tmAttributeSource(tx tmtypes.Tx, evt abcitypes.Event, height uint64) func() map[string]string {
 	newEvt := make(map[string]string, 0)
 	for _, attr := range evt.Attributes {
 		newEvt[string(attr.Key)] = string(attr.Value)
 	}
-	newEvt["height"] = strconv.FormatInt(height, 10)
+
+	newEvt["height"] = strconv.FormatUint(height, 10)
 	newEvt["hash"] = strings.ToUpper(hex.EncodeToString(tx.Hash()[:]))
 	return func() map[string]string { return newEvt }
 }
@@ -80,7 +81,9 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 				continue
 			}
 			log.Debugf("received block: %d", data.Header.Height)
-			a.handleBlockEvent(data.Header.Height)
+			if err := a.handleBlockEvent(data.Header.Height); err != nil {
+				log.Errorf("error handling block event %d: %+v", data.Header.Height, err)
+			}
 		case evt := <-openContractEvents:
 			log.Debugf("received open contract event")
 			openContractEvent := types.OpenContractEvent{}
@@ -125,7 +128,15 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 		// converted := convertEvent(wsAttributeSource(evt), "claim_contract_income", 0, hash)
 		// a.handleClaimContractIncomeEvent(converted)
 		case evt := <-closeContractEvents:
-			log.Debug(evt)
+			log.Debugf("received close_contract event")
+			contractSettlementEvent := types.ContractSettlementEvent{}
+			if err := convertEvent(wsAttributeSource(evt), &contractSettlementEvent); err != nil {
+				log.Errorf("error converting close_contract event: %+v", err)
+				break
+			}
+			if err := a.handleContractSettlementEvent(contractSettlementEvent); err != nil {
+				log.Errorf("error handling claim contract income event: %+v", err)
+			}
 		// converted := convertEvent("close_contract", evt.Events)
 		// converted := convertEvent(wsAttributeSource(evt), "close_contract", 0, hash)
 		// log.Infof("close_contract: %#v", converted)
@@ -173,7 +184,7 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 				case "open_contract":
 					openContractEvent := types.OpenContractEvent{}
 					// tmAttributeSource(tx tmtypes.Tx, evt abcitypes.Event, height int64)
-					if err := convertEvent(tmAttributeSource(transaction, event, currentBlock.Block.Height), &openContractEvent); err != nil {
+					if err := convertEvent(tmAttributeSource(transaction, event, a.Height), &openContractEvent); err != nil {
 						log.Errorf("error converting %s event: %+v", event.Type, err)
 						break
 					}
@@ -182,7 +193,7 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 					}
 				case "provider_bond":
 					bondProviderEvent := types.BondProviderEvent{}
-					if err = convertEvent(tmAttributeSource(transaction, event, currentBlock.Block.Height), &bondProviderEvent); err != nil {
+					if err = convertEvent(tmAttributeSource(transaction, event, a.Height), &bondProviderEvent); err != nil {
 						log.Errorf("error converting %s event: %+v", event.Type, err)
 						break
 					}
@@ -191,7 +202,7 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 					}
 				case "provider_mod":
 					modProviderEvent := types.ModProviderEvent{}
-					if err = convertEvent(tmAttributeSource(transaction, event, currentBlock.Block.Height), &modProviderEvent); err != nil {
+					if err = convertEvent(tmAttributeSource(transaction, event, a.Height), &modProviderEvent); err != nil {
 						log.Errorf("error converting %s event: %+v", event.Type, err)
 						break
 					}
@@ -200,7 +211,7 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 					}
 				case "claim_contract_income":
 					contractSettlementEvent := types.ContractSettlementEvent{}
-					if err := convertEvent(tmAttributeSource(transaction, event, currentBlock.Block.Height), &contractSettlementEvent); err != nil {
+					if err := convertEvent(tmAttributeSource(transaction, event, a.Height), &contractSettlementEvent); err != nil {
 						log.Errorf("error converting claim_contract_income event: %+v", err)
 						break
 					}
@@ -209,7 +220,7 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 					}
 				case "validator_payout":
 					validatorPayoutEvent := types.ValidatorPayoutEvent{}
-					if err := convertEvent(tmAttributeSource(transaction, event, currentBlock.Block.Height), &validatorPayoutEvent); err != nil {
+					if err := convertEvent(tmAttributeSource(transaction, event, a.Height), &validatorPayoutEvent); err != nil {
 						log.Errorf("error converting validatorPayoutEvent event: %+v", err)
 						break
 					}
@@ -218,7 +229,7 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 					}
 				case "contract_settlement":
 					contractSettlementEvent := types.ContractSettlementEvent{}
-					if err := convertEvent(tmAttributeSource(transaction, event, currentBlock.Block.Height), &contractSettlementEvent); err != nil {
+					if err := convertEvent(tmAttributeSource(transaction, event, a.Height), &contractSettlementEvent); err != nil {
 						log.Errorf("error converting contractSettlementEvent: %+v", err)
 						break
 					}
@@ -229,7 +240,7 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 					// convertedEvent := convertHistoricalEvent(event, txInfo.Height, strings.ToUpper(hex.EncodeToString(transaction.Hash()[:])))
 					// log.Warnf("close_contract event: %#v", convertedEvent)
 					contractSettlementEvent := types.ContractSettlementEvent{}
-					if err := convertEvent(tmAttributeSource(transaction, event, currentBlock.Block.Height), &contractSettlementEvent); err != nil {
+					if err := convertEvent(tmAttributeSource(transaction, event, a.Height), &contractSettlementEvent); err != nil {
 						log.Errorf("error converting close_contract: %+v", err)
 						break
 					}

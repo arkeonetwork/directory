@@ -7,7 +7,7 @@ CHAIN=eth-mainnet-fullnode
 
 USER=alice
 PROVIDER_PUBKEY=$alicekey
-AMT=222
+AMT=100000000
 
 arkeod tx arkeo bond-provider --from $USER -y $PROVIDER_PUBKEY $CHAIN $AMT
 
