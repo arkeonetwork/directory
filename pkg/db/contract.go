@@ -65,6 +65,6 @@ func (d *DirectoryDB) InsertOpenContractEvent(contractID int64, evt types.OpenCo
 		return nil, errors.Wrapf(err, "error obtaining db connection")
 	}
 
-	return insert(conn, sqlInsertOpenContractEvent, contractID, evt.ClientPubkey, evt.ContractType, evt.Height, evt.TxID,
+	return insert(conn, sqlUpsertOpenContractEvent, contractID, evt.ClientPubkey, evt.ContractType, evt.Height, evt.TxID,
 		evt.Duration, evt.Rate, evt.OpenCost)
 }
