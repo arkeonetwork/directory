@@ -308,7 +308,7 @@ func (a *IndexerApp) handleClaimContractIncomeEvent(evt types.ClaimContractIncom
 	return fmt.Errorf("not done: %s", evt.Paid)
 }
 
-func (a *IndexerApp) git(event *map[string]string) {
+func (a *IndexerApp) handleContractSettlement(event *map[string]string) {
 
 	// contractSettlement, err := parseContractSettlementEvent(*event)
 	contractSettlement := types.ContractSettlementEvent{}
