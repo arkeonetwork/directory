@@ -6,8 +6,10 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ArkeoNetwork/directory/pkg/types"
+	resty "github.com/go-resty/resty/v2"
 )
 
 func ParseCoordinates(coordinates string) (types.Coordinates, error) {
@@ -49,4 +51,23 @@ var validChains = map[string]struct{}{"arkeo-mainnet-fullnode": {}, "btc-mainnet
 func ValidateChain(chain string) (ok bool) {
 	_, ok = validChains[chain]
 	return
+}
+
+func DownloadProviderMetadata(url string, retries int, maxBytes int) (*map[string]any, error) {
+	client := resty.New()
+	var result map[string]any
+	client.SetRetryCount(retries)
+	client.SetTimeout(time.Second * 5)
+	client.SetHeader("Accept", "application/json")
+	resp, err := client.R().ForceContentType("application/json").SetResult(&result).Get(url)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(resp.Body()) > maxBytes {
+		return nil, errors.New("DownloadProviderMetadata: max bytes exceeded")
+	}
+
+	return &result, nil
 }

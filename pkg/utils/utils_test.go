@@ -68,3 +68,25 @@ func TestParseContractType(t *testing.T) {
 		t.FailNow()
 	}
 }
+
+func TestDownloadProviderMetadata(t *testing.T) {
+
+	data, err := DownloadProviderMetadata("https://petstore.swagger.io/v2/swagger.json", 5, 1e6)
+	if data == nil {
+		t.FailNow()
+	}
+
+	if err != nil {
+		t.FailNow()
+	}
+
+	if _, exists := (*data)["host"]; !exists {
+		t.FailNow()
+	}
+
+	_, err = DownloadProviderMetadata("https://petstore.swagger.io/v2/swagger.json", 5, 1)
+	if err == nil {
+		t.FailNow()
+	}
+
+}
