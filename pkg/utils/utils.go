@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ArkeoNetwork/directory/pkg/sentinel"
 	"github.com/ArkeoNetwork/directory/pkg/types"
 	resty "github.com/go-resty/resty/v2"
 )
@@ -53,9 +54,9 @@ func ValidateChain(chain string) (ok bool) {
 	return
 }
 
-func DownloadProviderMetadata(url string, retries int, maxBytes int) (*map[string]any, error) {
+func DownloadProviderMetadata(url string, retries int, maxBytes int) (*sentinel.Metadata, error) {
 	client := resty.New()
-	var result map[string]any
+	var result sentinel.Metadata
 	client.SetRetryCount(retries)
 	client.SetTimeout(time.Second * 5)
 	client.SetHeader("Accept", "application/json")

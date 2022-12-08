@@ -70,9 +70,9 @@ func TestParseContractType(t *testing.T) {
 }
 
 func TestDownloadProviderMetadata(t *testing.T) {
-
-	data, err := DownloadProviderMetadata("https://petstore.swagger.io/v2/swagger.json", 5, 1e6)
-	if data == nil {
+	uri := "https://raw.githubusercontent.com/ArkeoNetwork/directory/main/docs/sample-metadata.json"
+	metadata, err := DownloadProviderMetadata(uri, 5, 1e6)
+	if metadata == nil {
 		t.FailNow()
 	}
 
@@ -80,11 +80,11 @@ func TestDownloadProviderMetadata(t *testing.T) {
 		t.FailNow()
 	}
 
-	if _, exists := (*data)["host"]; !exists {
+	if metadata.Version == "" {
 		t.FailNow()
 	}
 
-	_, err = DownloadProviderMetadata("https://petstore.swagger.io/v2/swagger.json", 5, 1)
+	_, err = DownloadProviderMetadata(uri, 5, 1)
 	if err == nil {
 		t.FailNow()
 	}

@@ -181,8 +181,7 @@ func (d *DirectoryDB) InsertModProviderEvent(providerID int64, evt types.ModProv
 		evt.MinContractDuration, evt.MaxContractDuration, evt.SubscriptionRate, evt.PayAsYouGoRate)
 }
 
-func (d *DirectoryDB) UpsertProviderMetadata(providerID int64, version string, data sentinel.Metadata) (*Entity, error) {
-	data.Version = version
+func (d *DirectoryDB) UpsertProviderMetadata(providerID int64, data sentinel.Metadata) (*Entity, error) {
 	conn, err := d.getConnection()
 	defer conn.Release()
 	if err != nil {
