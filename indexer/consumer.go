@@ -102,6 +102,14 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 				switch evt.GetType() {
 				case "validator_payout":
 					log.Debugf("validator_payout event")
+					validatorPayoutEvent := types.ValidatorPayoutEvent{}
+					if err := convertEvent(tmAttributeSource(nil, evt, uint64(data.Block.Height)), &validatorPayoutEvent); err != nil {
+						log.Errorf("error converting validator_payout event: %+v", err)
+						break
+					}
+					if err := a.handleValidatorPayoutEvent(validatorPayoutEvent); err != nil {
+						log.Errorf("error handling validator_payout event: %+v", err)
+					}
 				case "contract_settlement":
 					log.Debugf("contract_settlement")
 					contractSettlementEvent := types.ContractSettlementEvent{}
