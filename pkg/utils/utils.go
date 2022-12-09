@@ -19,7 +19,7 @@ func ParseCoordinates(coordinates string) (types.Coordinates, error) {
 	}
 	coordinatesSplit := strings.Split(coordinates, ",")
 	if len(coordinatesSplit) != 2 {
-		return types.Coordinates{}, errors.New("too many parameters passed to coordinates")
+		return types.Coordinates{}, errors.New("invalid string passed to coordinates")
 	}
 	latitude, err := strconv.ParseFloat(coordinatesSplit[0], 32)
 	if err != nil {

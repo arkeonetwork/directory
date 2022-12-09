@@ -2,10 +2,12 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/ArkeoNetwork/directory/pkg/sentinel"
 	"github.com/ArkeoNetwork/directory/pkg/types"
+	"github.com/ArkeoNetwork/directory/pkg/utils"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/pkg/errors"
@@ -129,6 +131,15 @@ func (d *DirectoryDB) SearchProviders(criteria types.ProviderSearchParams) ([]*A
 	if criteria.IsMinValidatorPaymentsSet {
 		sb = sb.Where(sb.GE("p.total_paid", criteria.MinValidatorPayments))
 	}
+	if criteria.IsMaxDistanceSet {
+		if !criteria.IsMinRateLimitSet {
+			// we haven't joined on provider id yet
+			sb = sb.JoinWithOption(sqlbuilder.LeftJoin, "provider_metadata", "p.id = provider_metadata.provider_id")
+		}
+		// note psql using long,lat instead of the normal lat,long per https://www.postgresql.org/docs/current/earthdistance.html
+		sb = sb.Where(sb.LessEqualThan(fmt.Sprintf("provider_metadata.location<@>point(%.5f,%.5f)", criteria.Coordinates.Longitude, criteria.Coordinates.Latitude), criteria.MaxDistance))
+	}
+
 	// Sort
 	switch criteria.SortKey {
 	case types.ProviderSortKeyNone:
@@ -188,9 +199,19 @@ func (d *DirectoryDB) UpsertProviderMetadata(providerID int64, data sentinel.Met
 		return nil, errors.Wrapf(err, "error obtaining db connection")
 	}
 
-	// TODO - always insert instead of upsert, fail on dupe (or read and fail on exists). are there any restrictions on version string?
 	c := data.Configuration
-	return insert(conn, sqlUpsertProviderMetadata, providerID, data.Version, c.Moniker, c.Website, c.Description, c.Location,
+
+	coordinates, err := utils.ParseCoordinates(c.Location)
+	var location sql.NullString // using "" doesn't work here with casting to a point, only a null string ('') works with the SQL
+	if err != nil {
+		location = sql.NullString{Valid: false}
+	} else {
+		// note psql using long,lat instead of the normal lat,long per https://www.postgresql.org/docs/current/earthdistance.html
+		location = sql.NullString{String: fmt.Sprintf("%.5f,%.5f", coordinates.Longitude, coordinates.Latitude), Valid: true}
+	}
+
+	// TODO - always insert instead of upsert, fail on dupe (or read and fail on exists). are there any restrictions on version string?
+	return insert(conn, sqlUpsertProviderMetadata, providerID, data.Version, c.Moniker, c.Website, c.Description, location,
 		c.Port, c.ProxyHost, c.SourceChain, c.EventStreamHost, c.ClaimStoreLocation, c.FreeTierRateLimit, c.FreeTierRateLimitDuration,
 		c.SubTierRateLimit, c.SubTierRateLimitDuration, c.AsGoTierRateLimit, c.AsGoTierRateLimitDuration)
 }
