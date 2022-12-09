@@ -97,11 +97,11 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 			}
 
 			endBlockEvents := data.ResultEndBlock.Events
-			log.Infof("block %d has %d endBlock events", data.Block.Height, len(endBlockEvents))
+			log.Debugf("block %d with %d endBlock events", data.Block.Height, len(endBlockEvents))
 			for _, evt := range endBlockEvents {
 				switch evt.GetType() {
 				case "validator_payout":
-					log.Infof("validator_payout event")
+					log.Debugf("validator_payout event")
 				case "contract_settlement":
 					log.Debugf("contract_settlement")
 					contractSettlementEvent := types.ContractSettlementEvent{}
@@ -113,8 +113,6 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 						log.Errorf("error handling open_contract event: %+v", err)
 					}
 				}
-				attribs := tmAttributeSource(nil, evt, uint64(data.Block.Height))()
-				log.Infof("%s: %#v", evt.GetType(), attribs)
 			}
 
 		case evt := <-openContractEvents:
