@@ -26,3 +26,6 @@ run-api: build
 
 db-migrate:
 	tern migrate -c db/tern.conf -m db
+
+lint:
+	@./scripts/lint.sh
