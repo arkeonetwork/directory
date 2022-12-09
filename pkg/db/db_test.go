@@ -17,6 +17,11 @@ var config = DBConfig{
 }
 
 func TestNew(t *testing.T) {
+
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	db, err := New(config)
 	if err != nil {
 		t.Errorf("error: %+v", err)

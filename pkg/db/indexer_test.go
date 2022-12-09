@@ -5,6 +5,11 @@ import (
 )
 
 func TestInsertIndexerStatus(t *testing.T) {
+
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	db, err := New(config)
 	if err != nil {
 		t.Errorf("error getting db: %+v", err)
@@ -23,6 +28,11 @@ func TestInsertIndexerStatus(t *testing.T) {
 }
 
 func TestUpdateIndexerStatus(t *testing.T) {
+
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	db, err := New(config)
 	if err != nil {
 		t.Errorf("error getting db: %+v", err)
@@ -41,6 +51,11 @@ func TestUpdateIndexerStatus(t *testing.T) {
 }
 
 func TestFindIndexerStatus(t *testing.T) {
+
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	db, err := New(config)
 	if err != nil {
 		t.Errorf("error getting db: %+v", err)

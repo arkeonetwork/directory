@@ -10,6 +10,11 @@ import (
 )
 
 func TestInsertProvider(t *testing.T) {
+
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	db, err := New(config)
 	if err != nil {
 		t.Errorf("error getting db: %+v", err)
@@ -28,6 +33,11 @@ func TestInsertProvider(t *testing.T) {
 }
 
 func TestFindProvider(t *testing.T) {
+
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	db, err := New(config)
 	if err != nil {
 		t.Errorf("error getting db: %+v", err)
@@ -53,6 +63,11 @@ func TestFindProvider(t *testing.T) {
 }
 
 func TestUpsertProviderMetadata(t *testing.T) {
+
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	db, err := New(config)
 	if err != nil {
 		t.Errorf("error getting db: %+v", err)
@@ -63,6 +78,11 @@ func TestUpsertProviderMetadata(t *testing.T) {
 }
 
 func TestSearchProviders(t *testing.T) {
+
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	db, err := New(config)
 	if err != nil {
 		t.Errorf("error getting db: %+v", err)

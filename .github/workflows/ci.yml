@@ -22,3 +22,6 @@ jobs:
         run: |
           make lint
           make build
+      - name: Unit Tests
+        run: |
+          make test-unit
