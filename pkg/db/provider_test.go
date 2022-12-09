@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/ArkeoNetwork/directory/pkg/sentinel"
+	"github.com/ArkeoNetwork/directory/pkg/types"
 	"github.com/google/uuid"
 )
 
@@ -58,5 +59,43 @@ func TestUpsertProviderMetadata(t *testing.T) {
 	}
 	if _, err = db.UpsertProviderMetadata(1, sentinel.Metadata{Version: "0.0.6t", Configuration: sentinel.Configuration{Moniker: "UnitTestOper", AsGoTierRateLimitDuration: time.Hour * 24 * 365 * 10, Location: "50.1535,-19.165"}}); err != nil {
 		t.Errorf("error upserting: %+v", err)
+	}
+}
+
+func TestSearchProviders(t *testing.T) {
+	db, err := New(config)
+	if err != nil {
+		t.Errorf("error getting db: %+v", err)
+	}
+
+	searchParams := types.ProviderSearchParams{IsMaxDistanceSet: true, Coordinates: types.Coordinates{Latitude: 50.01, Longitude: -35.68}, MaxDistance: 0}
+	results, err := db.SearchProviders(searchParams)
+	if err != nil {
+		t.Errorf("error finding provider with geolocation: %+v", err)
+		t.FailNow()
+	}
+
+	if results == nil {
+		t.FailNow()
+	}
+
+	if len(results) != 0 {
+		t.FailNow()
+	}
+
+	searchParams.MaxDistance = 1000 // miles
+	results, err = db.SearchProviders(searchParams)
+
+	if err != nil {
+		t.Errorf("error finding provider with geolocation: %+v", err)
+		t.FailNow()
+	}
+
+	if results == nil {
+		t.FailNow()
+	}
+
+	if len(results) < 1 {
+		t.FailNow()
 	}
 }

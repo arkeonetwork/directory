@@ -8,5 +8,5 @@ ALTER TABLE provider_metadata ALTER COLUMN location TYPE point USING location::p
 -- back to text
 
 ALTER TABLE provider_metadata ALTER COLUMN location TYPE text;
-drop EXTENSION cube;
 drop EXTENSION earthdistance;
+drop EXTENSION cube;
