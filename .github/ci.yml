@@ -1,0 +1,24 @@
+name: Arkeo Directory Indexer and API
+run-name: ${{ github.actor }} is testing a code change 🚀
+on: [push]
+
+# This allows a subsequently queued workflow run to interrupt previous runs
+concurrency:
+  group: "${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Setup Golang
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+          cache: true
+      - name: Lint code
+        run: |
+          make lint
+          make build
