@@ -20,26 +20,30 @@ func (a *IndexerApp) handleOpenContractEvent(evt types.OpenContractEvent) error 
 		return errors.Wrapf(err, "error upserting contract")
 	}
 	if _, err = a.db.UpsertOpenContractEvent(ent.ID, evt); err != nil {
-		return errors.Wrapf(err, "error inserting open contract event")
+		return errors.Wrapf(err, "error upserting open contract event")
 	}
 
-	log.Infof("update finished for contract %d", ent.ID)
 	return nil
 }
 
 func (a *IndexerApp) handleCloseContractEvent(evt types.CloseContractEvent) error {
-	contract, err := a.db.FindContractByPubKeys(evt.Chain, evt.ProviderPubkey, evt.GetDelegatePubkey())
+	contracts, err := a.db.FindContractsByPubKeys(evt.Chain, evt.ProviderPubkey, evt.GetDelegatePubkey())
 	if err != nil {
 		return errors.Wrapf(err, "error finding contract for %s:%s %s", evt.ProviderPubkey, evt.Chain, evt.GetDelegatePubkey())
 	}
-	if contract == nil {
-		return fmt.Errorf("no contract found: %s:%s %s", evt.ProviderPubkey, evt.Chain, evt.GetDelegatePubkey())
+	if len(contracts) < 1 {
+		return fmt.Errorf("no contracts found: %s:%s %s", evt.ProviderPubkey, evt.Chain, evt.GetDelegatePubkey())
 	}
+
+	// FindContractsByPubKeys returns by id descending (newest)
+	contract := contracts[0]
 	if _, err = a.db.UpsertCloseContractEvent(contract.ID, evt); err != nil {
 		return errors.Wrapf(err, "error upserting open contract event")
 	}
 
-	log.Infof("update finished for close contract %d", contract.ID)
+	if _, err = a.db.CloseContract(contract.ID, contract.Height); err != nil {
+		return errors.Wrapf(err, "error closing contract %d", contract.ID)
+	}
 	return nil
 }
 
@@ -52,7 +56,7 @@ func (a *IndexerApp) handleContractSettlementEvent(evt types.ContractSettlementE
 	if provider == nil {
 		return fmt.Errorf("cannot claim income provider %s on chain %s DNE", evt.ProviderPubkey, evt.Chain)
 	}
-	contract, err := a.db.FindContract(provider.ID, evt.ClientPubkey)
+	contract, err := a.db.FindContract(provider.ID, evt.ClientPubkey, evt.Height)
 	if err != nil {
 		return errors.Wrapf(err, "error finding contract provider %s chain %s", evt.ProviderPubkey, evt.Chain)
 	}

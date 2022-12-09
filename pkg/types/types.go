@@ -20,7 +20,7 @@ type BaseContractEvent struct {
 	ProviderPubkey string `mapstructure:"pubkey"`
 	Chain          string `mapstructure:"chain"`
 	ClientPubkey   string `mapstructure:"client"`
-	DelegatePubkey string `mapstructure:"delegate"`
+	DelegatePubkey string `mapstructure:"delegate"` // see BaseContractEvent.GetDelegatePubkey()
 	TxID           string `mapstructure:"hash"`
 	Height         int64  `mapstructure:"height"`
 }

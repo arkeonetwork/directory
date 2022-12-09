@@ -1,7 +1,10 @@
 package db
 
 import (
+	"context"
+
 	"github.com/ArkeoNetwork/directory/pkg/types"
+	"github.com/georgysavva/scany/pgxscan"
 	"github.com/pkg/errors"
 )
 
@@ -17,7 +20,7 @@ type ArkeoContract struct {
 	OpenCost       int64              `db:"open_cost"`
 }
 
-func (d *DirectoryDB) FindContract(providerID int64, delegatePubkey string) (*ArkeoContract, error) {
+func (d *DirectoryDB) FindContract(providerID int64, delegatePubkey string, height int64) (*ArkeoContract, error) {
 	conn, err := d.getConnection()
 	defer conn.Release()
 	if err != nil {
@@ -25,7 +28,7 @@ func (d *DirectoryDB) FindContract(providerID int64, delegatePubkey string) (*Ar
 	}
 
 	contract := ArkeoContract{}
-	if err = selectOne(conn, sqlFindContract, &contract, providerID, delegatePubkey); err != nil {
+	if err = selectOne(conn, sqlFindContract, &contract, providerID, delegatePubkey, height); err != nil {
 		return nil, errors.Wrapf(err, "error selecting")
 	}
 
@@ -36,7 +39,21 @@ func (d *DirectoryDB) FindContract(providerID int64, delegatePubkey string) (*Ar
 	return &contract, nil
 }
 
-func (d *DirectoryDB) FindContractByPubKeys(chain string, providerPubkey string, delegatePubkey string) (*ArkeoContract, error) {
+func (d *DirectoryDB) FindContractsByPubKeys(chain string, providerPubkey string, delegatePubkey string) ([]*ArkeoContract, error) {
+	conn, err := d.getConnection()
+	defer conn.Release()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error obtaining db connection")
+	}
+	results := make([]*ArkeoContract, 0, 128)
+	if err = pgxscan.Select(context.Background(), conn, &results, sqlFindContractsByPubKeys, chain, providerPubkey, delegatePubkey); err != nil {
+		return nil, errors.Wrapf(err, "error scanning")
+	}
+
+	return results, nil
+}
+
+func (d *DirectoryDB) FindContractByPubKeys(chain string, providerPubkey string, delegatePubkey string, height int64) (*ArkeoContract, error) {
 	conn, err := d.getConnection()
 	defer conn.Release()
 	if err != nil {
@@ -44,7 +61,7 @@ func (d *DirectoryDB) FindContractByPubKeys(chain string, providerPubkey string,
 	}
 
 	contract := ArkeoContract{}
-	if err = selectOne(conn, sqlFindContractByPubKeys, &contract, chain, providerPubkey, delegatePubkey); err != nil {
+	if err = selectOne(conn, sqlFindContractByPubKeys, &contract, chain, providerPubkey, delegatePubkey, height); err != nil {
 		return nil, errors.Wrapf(err, "error selecting")
 	}
 
@@ -66,6 +83,16 @@ func (d *DirectoryDB) UpsertContract(providerID int64, evt types.OpenContractEve
 		evt.Duration, evt.Rate, evt.OpenCost, evt.Height)
 }
 
+func (d *DirectoryDB) CloseContract(contractID int64, height int64) (*Entity, error) {
+	conn, err := d.getConnection()
+	defer conn.Release()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error obtaining db connection")
+	}
+
+	return update(conn, sqlCloseContract, height, contractID)
+}
+
 func (d *DirectoryDB) UpsertContractSettlementEvent(contractID int64, evt types.ContractSettlementEvent) (*Entity, error) {
 	conn, err := d.getConnection()
 	defer conn.Release()
@@ -84,7 +111,7 @@ func (d *DirectoryDB) UpsertOpenContractEvent(contractID int64, evt types.OpenCo
 		return nil, errors.Wrapf(err, "error obtaining db connection")
 	}
 
-	return insert(conn, sqlUpsertOpenContractEvent, contractID, evt.ClientPubkey, evt.ContractType, evt.Height, evt.TxID,
+	return upsert(conn, sqlUpsertOpenContractEvent, contractID, evt.ClientPubkey, evt.ContractType, evt.Height, evt.TxID,
 		evt.Duration, evt.Rate, evt.OpenCost)
 }
 
@@ -95,5 +122,5 @@ func (d *DirectoryDB) UpsertCloseContractEvent(contractID int64, evt types.Close
 		return nil, errors.Wrapf(err, "error obtaining db connection")
 	}
 
-	return insert(conn, sqlUpsertCloseContractEvent, contractID, evt.ClientPubkey, evt.DelegatePubkey, evt.Height, evt.TxID)
+	return upsert(conn, sqlUpsertCloseContractEvent, contractID, evt.ClientPubkey, evt.GetDelegatePubkey(), evt.Height, evt.TxID)
 }

@@ -20,5 +20,5 @@ RATE=10
 PAY_AS_YOU_GO=1
 # RATE=20
 
-arkeod tx arkeo open-contract --from $USER $PROVIDER_PUBKEY $CHAIN $CLIENT_PUBKEY $SUBSCRIPTION 1000 100 $RATE  -y
+arkeod tx arkeo open-contract --from $USER $PROVIDER_PUBKEY $CHAIN $CLIENT_PUBKEY $SUBSCRIPTION 200 20 $RATE  -y
 echo "done"
