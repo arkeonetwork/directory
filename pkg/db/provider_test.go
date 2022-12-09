@@ -56,7 +56,7 @@ func TestUpsertProviderMetadata(t *testing.T) {
 	if err != nil {
 		t.Errorf("error getting db: %+v", err)
 	}
-	if _, err = db.UpsertProviderMetadata(1, sentinel.Metadata{Version: "0.0.1t", Configuration: sentinel.Configuration{Moniker: "UnitTestOper", AsGoTierRateLimitDuration: time.Hour * 24 * 365 * 10}}); err != nil {
+	if _, err = db.UpsertProviderMetadata(1, sentinel.Metadata{Version: "0.0.6t", Configuration: sentinel.Configuration{Moniker: "UnitTestOper", AsGoTierRateLimitDuration: time.Hour * 24 * 365 * 10, Location: "50.1535,-19.165"}}); err != nil {
 		t.Errorf("error upserting: %+v", err)
 	}
 }
