@@ -13,6 +13,9 @@ clean:
 test:
 	go test ./...
 
+test-unit:
+	go test -v -short ./...
+
 swagger:
 	swagger generate spec -o ./swagger.yaml --scan-models
 swagger-serve: swagger

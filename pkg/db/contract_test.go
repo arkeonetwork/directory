@@ -5,6 +5,11 @@ import (
 )
 
 func TestFindContract(t *testing.T) {
+
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	db, err := New(config)
 	if err != nil {
 		t.Errorf("error getting db: %+v", err)
