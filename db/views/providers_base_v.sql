@@ -17,7 +17,7 @@ select p.id,
        p.created,
        p.updated,
        (select count(1) from contracts oc where oc.provider_id = p.id)        as contract_count,
-       (select count(1) from open_contracts_v oc where oc.provider_id = p.id) as open_contract_count,
+    --    (select count(1) from open_contracts_v oc where oc.provider_id = p.id) as open_contract_count,
        (select min(bond_evts.height)
         from provider_bond_events bond_evts
         where bond_evts.provider_id = p.id)                                   as birth_height,

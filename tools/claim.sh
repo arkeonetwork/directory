@@ -4,8 +4,13 @@ BASEDIR=$(dirname "$0")
 source $BASEDIR/env.sh
 
 # increment each invocation
-NONCE=13
-CHAIN=eth-mainnet-fullnode
+NONCE=$1
+if [ -z $NONCE ]
+then
+  NONCE=1
+fi
+
+CHAIN=btc-mainnet-fullnode
 
 USER=bob
 PROVIDER_PUBKEY=$alicekey

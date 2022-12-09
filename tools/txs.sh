@@ -1,7 +1,8 @@
 
 #!/bin/bash
 
-source ./env.sh
+BASEDIR=$(dirname "$0")
+source $BASEDIR/env.sh
 
 # bond provider
 arkeod tx arkeo bond-provider $alicekey btc-mainnet-fullnode 100000000 --from alice -y
