@@ -8,7 +8,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
+  lint-unit-tests:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
