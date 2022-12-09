@@ -41,7 +41,7 @@ func (a *IndexerApp) handleCloseContractEvent(evt types.CloseContractEvent) erro
 		return errors.Wrapf(err, "error upserting open contract event")
 	}
 
-	if _, err = a.db.CloseContract(contract.ID, contract.Height); err != nil {
+	if _, err = a.db.CloseContract(contract.ID, evt.EventHeight); err != nil {
 		return errors.Wrapf(err, "error closing contract %d", contract.ID)
 	}
 	return nil
@@ -49,14 +49,15 @@ func (a *IndexerApp) handleCloseContractEvent(evt types.CloseContractEvent) erro
 
 func (a *IndexerApp) handleContractSettlementEvent(evt types.ContractSettlementEvent) error {
 	log.Infof("receieved contractSettlementEvent %#v", evt)
-	provider, err := a.db.FindProvider(evt.ProviderPubkey, evt.Chain)
-	if err != nil {
-		return errors.Wrapf(err, "error finding provider %s for chain %s", evt.ProviderPubkey, evt.Chain)
-	}
-	if provider == nil {
-		return fmt.Errorf("cannot claim income provider %s on chain %s DNE", evt.ProviderPubkey, evt.Chain)
-	}
-	contract, err := a.db.FindContract(provider.ID, evt.ClientPubkey, evt.Height)
+	// provider, err := a.db.FindProvider(evt.ProviderPubkey, evt.Chain)
+	// if err != nil {
+	// 	return errors.Wrapf(err, "error finding provider %s for chain %s", evt.ProviderPubkey, evt.Chain)
+	// }
+	// if provider == nil {
+	// 	return fmt.Errorf("cannot claim income provider %s on chain %s DNE", evt.ProviderPubkey, evt.Chain)
+	// }
+	// contract, err := a.db.FindContract(provider.ID, evt.ClientPubkey, evt.Height)
+	contract, err := a.db.FindContractByPubKeys(evt.Chain, evt.ProviderPubkey, evt.GetDelegatePubkey(), evt.Height)
 	if err != nil {
 		return errors.Wrapf(err, "error finding contract provider %s chain %s", evt.ProviderPubkey, evt.Chain)
 	}

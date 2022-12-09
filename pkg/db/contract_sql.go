@@ -12,7 +12,9 @@ const (
 	c.contract_type,
 	c.duration,
 	c.rate,
-	c.open_cost`
+	c.open_cost,
+	c.closed_height
+	`
 )
 
 var (
@@ -68,6 +70,7 @@ var (
 		do update set contract_type = $4, duration = $5, rate = $6, open_cost = $7, updated = now()
 		where contracts.provider_id = $1
 		  and contracts.delegate_pubkey = $2
+			and contracts.height = $8
 		returning id, created, updated
 	`
 	sqlCloseContract = `
@@ -96,9 +99,10 @@ var (
 	sqlUpsertContractSettlementEvent = `
 	insert into contract_settlement_events(contract_id,txid,client_pubkey,height,nonce,paid,reserve)
 	values ($1,$2,$3,$4,$5,$6,$7)
-	on conflict on constraint contract_settlement_events_txid_key
+	on conflict on constraint contract_settlement_contract_nonce_key
 	do update set updated = now()
-	where contract_settlement_events.txid = $2
+	where contract_settlement_events.contract_id = $1
+	  and contract_settlement_events.nonce = $5
 	returning id, created, updated
 `
 )

@@ -23,6 +23,7 @@ type BaseContractEvent struct {
 	DelegatePubkey string `mapstructure:"delegate"` // see BaseContractEvent.GetDelegatePubkey()
 	TxID           string `mapstructure:"hash"`
 	Height         int64  `mapstructure:"height"`
+	EventHeight    int64  `mapstructure:"eventHeight"`
 }
 
 // get the delegate pubkey falling back to client pubkey if undefined
