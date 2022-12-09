@@ -17,6 +17,5 @@ select p.id as provider_id,
        c.open_cost,
        c.updated,
        c.created
-from providers p
-         join contracts c on p.id = c.provider_id
+from providers p join contracts c on p.id = c.provider_id
     );

@@ -36,6 +36,25 @@ func (d *DirectoryDB) FindContract(providerID int64, delegatePubkey string) (*Ar
 	return &contract, nil
 }
 
+func (d *DirectoryDB) FindContractByPubKeys(chain string, providerPubkey string, delegatePubkey string) (*ArkeoContract, error) {
+	conn, err := d.getConnection()
+	defer conn.Release()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error obtaining db connection")
+	}
+
+	contract := ArkeoContract{}
+	if err = selectOne(conn, sqlFindContractByPubKeys, &contract, chain, providerPubkey, delegatePubkey); err != nil {
+		return nil, errors.Wrapf(err, "error selecting")
+	}
+
+	// not found
+	if contract.ID == 0 {
+		return nil, nil
+	}
+	return &contract, nil
+}
+
 func (d *DirectoryDB) UpsertContract(providerID int64, evt types.OpenContractEvent) (*Entity, error) {
 	conn, err := d.getConnection()
 	defer conn.Release()
@@ -43,7 +62,7 @@ func (d *DirectoryDB) UpsertContract(providerID int64, evt types.OpenContractEve
 		return nil, errors.Wrapf(err, "error obtaining db connection")
 	}
 
-	return upsert(conn, sqlUpsertContract, providerID, evt.DelegatePubkey, evt.ClientPubkey, evt.ContractType,
+	return upsert(conn, sqlUpsertContract, providerID, evt.GetDelegatePubkey(), evt.ClientPubkey, evt.ContractType,
 		evt.Duration, evt.Rate, evt.OpenCost, evt.Height)
 }
 
@@ -67,4 +86,14 @@ func (d *DirectoryDB) UpsertOpenContractEvent(contractID int64, evt types.OpenCo
 
 	return insert(conn, sqlUpsertOpenContractEvent, contractID, evt.ClientPubkey, evt.ContractType, evt.Height, evt.TxID,
 		evt.Duration, evt.Rate, evt.OpenCost)
+}
+
+func (d *DirectoryDB) UpsertCloseContractEvent(contractID int64, evt types.CloseContractEvent) (*Entity, error) {
+	conn, err := d.getConnection()
+	defer conn.Release()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error obtaining db connection")
+	}
+
+	return insert(conn, sqlUpsertCloseContractEvent, contractID, evt.ClientPubkey, evt.DelegatePubkey, evt.Height, evt.TxID)
 }

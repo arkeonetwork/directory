@@ -52,6 +52,7 @@ func tmAttributeSource(tx tmtypes.Tx, evt abcitypes.Event, height uint64) func()
 	newEvt := make(map[string]string, 0)
 	for _, attr := range evt.Attributes {
 		newEvt[string(attr.Key)] = string(attr.Value)
+		log.Infof("%s: %s", attr.Key, string(attr.Value))
 	}
 
 	newEvt["height"] = strconv.FormatUint(height, 10)
@@ -88,7 +89,7 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 			log.Debugf("received open contract event")
 			openContractEvent := types.OpenContractEvent{}
 			if err := convertEvent(wsAttributeSource(evt), &openContractEvent); err != nil {
-				log.Errorf("error converting open_contract event HAPPENING result must be a pointer: %+v", err)
+				log.Errorf("error converting open_contract event: %+v", err)
 				break
 			}
 			if err := a.handleOpenContractEvent(openContractEvent); err != nil {
@@ -129,17 +130,14 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 		// a.handleClaimContractIncomeEvent(converted)
 		case evt := <-closeContractEvents:
 			log.Debugf("received close_contract event")
-			contractSettlementEvent := types.ContractSettlementEvent{}
-			if err := convertEvent(wsAttributeSource(evt), &contractSettlementEvent); err != nil {
+			closeContractEvent := types.CloseContractEvent{}
+			if err := convertEvent(wsAttributeSource(evt), &closeContractEvent); err != nil {
 				log.Errorf("error converting close_contract event: %+v", err)
 				break
 			}
-			if err := a.handleContractSettlementEvent(contractSettlementEvent); err != nil {
-				log.Errorf("error handling claim contract income event: %+v", err)
+			if err := a.handleCloseContractEvent(closeContractEvent); err != nil {
+				log.Errorf("error handling close contract event: %+v", err)
 			}
-		// converted := convertEvent("close_contract", evt.Events)
-		// converted := convertEvent(wsAttributeSource(evt), "close_contract", 0, hash)
-		// log.Infof("close_contract: %#v", converted)
 		case <-quit:
 			log.Infof("received os quit signal")
 			return nil
@@ -239,13 +237,23 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 				case "close_contract":
 					// convertedEvent := convertHistoricalEvent(event, txInfo.Height, strings.ToUpper(hex.EncodeToString(transaction.Hash()[:])))
 					// log.Warnf("close_contract event: %#v", convertedEvent)
-					contractSettlementEvent := types.ContractSettlementEvent{}
-					if err := convertEvent(tmAttributeSource(transaction, event, a.Height), &contractSettlementEvent); err != nil {
-						log.Errorf("error converting close_contract: %+v", err)
+					// contractSettlementEvent := types.ContractSettlementEvent{}
+					// if err := convertEvent(tmAttributeSource(transaction, event, a.Height), &contractSettlementEvent); err != nil {
+					// 	log.Errorf("error converting close_contract: %+v", err)
+					// 	break
+					// }
+					// if err := a.handleContractSettlementEvent(contractSettlementEvent); err != nil {
+					// 	log.Errorf("error handling close_contract: %+v", err)
+					// }
+
+					log.Debugf("received close_contract event")
+					closeContractEvent := types.CloseContractEvent{}
+					if err := convertEvent(tmAttributeSource(transaction, event, a.Height), &closeContractEvent); err != nil {
+						log.Errorf("error converting close_contract event: %+v", err)
 						break
 					}
-					if err := a.handleContractSettlementEvent(contractSettlementEvent); err != nil {
-						log.Errorf("error handling close_contract: %+v", err)
+					if err := a.handleCloseContractEvent(closeContractEvent); err != nil {
+						log.Errorf("error handling close contract event: %+v", err)
 					}
 				default:
 					log.Warnf("received event %s", event.Type)

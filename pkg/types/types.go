@@ -16,28 +16,40 @@ var (
 	ContractTypeSubscription ContractType = "Subscription"
 )
 
+type BaseContractEvent struct {
+	ProviderPubkey string `mapstructure:"pubkey"`
+	Chain          string `mapstructure:"chain"`
+	ClientPubkey   string `mapstructure:"client"`
+	DelegatePubkey string `mapstructure:"delegate"`
+	TxID           string `mapstructure:"hash"`
+	Height         int64  `mapstructure:"height"`
+}
+
+// get the delegate pubkey falling back to client pubkey if undefined
+func (b BaseContractEvent) GetDelegatePubkey() string {
+	if b.DelegatePubkey != "" {
+		return b.DelegatePubkey
+	}
+	return b.ClientPubkey
+}
+
 type OpenContractEvent struct {
-	ProviderPubkey string       `mapstructure:"pubkey"`
-	Chain          string       `mapstructure:"chain"`
-	ClientPubkey   string       `mapstructure:"client"`
-	DelegatePubkey string       `mapstructure:"client"`
-	TxID           string       `mapstructure:"hash"`
-	ContractType   ContractType `mapstructure:"type"`
-	Height         int64        `mapstructure:"height"`
-	Duration       int64        `mapstructure:"duration"`
-	Rate           int64        `mapstructure:"rate"`
-	OpenCost       int64        `mapstructure:"open_cost"`
+	BaseContractEvent `mapstructure:",squash"`
+	Duration          int64        `mapstructure:"duration"`
+	ContractType      ContractType `mapstructure:"type"`
+	Rate              int64        `mapstructure:"rate"`
+	OpenCost          int64        `mapstructure:"open_cost"`
+}
+
+type CloseContractEvent struct {
+	BaseContractEvent `mapstructure:",squash"`
 }
 
 type ContractSettlementEvent struct {
-	Pubkey       string `mapstructure:"pubkey"`
-	Chain        string `mapstructure:"chain"`
-	ClientPubkey string `mapstructure:"client"` // could be delegate?
-	TxID         string `mapstructure:"hash"`
-	Height       int64  `mapstructure:"height"`
-	Nonce        string `mapstructure:"nonce"`
-	Paid         string `mapstructure:"paid"`
-	Reserve      string `mapstructure:"reserve"`
+	BaseContractEvent `mapstructure:",squash"`
+	Nonce             string `mapstructure:"nonce"`
+	Paid              string `mapstructure:"paid"`
+	Reserve           string `mapstructure:"reserve"`
 }
 
 type ValidatorPayoutEvent struct {
