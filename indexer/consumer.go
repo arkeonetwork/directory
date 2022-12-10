@@ -3,7 +3,6 @@ package indexer
 import (
 	"context"
 	"encoding/hex"
-	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
@@ -70,6 +69,14 @@ func tmAttributeSource(tx tmtypes.Tx, evt abcitypes.Event, height uint64) func()
 	return func() map[string]string { return attribs }
 }
 
+func (a *IndexerApp) handleValidatorPayoutEvent(evt types.ValidatorPayoutEvent) error {
+	log.Infof("receieved validatorPayoutEvent %#v", evt)
+	if _, err := a.db.UpsertValidatorPayoutEvent(evt); err != nil {
+		return errors.Wrapf(err, "error upserting validator payout event")
+	}
+	return nil
+}
+
 func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 	blockEvents := subscribe(client, "tm.event = 'NewBlock'")
 	bondProviderEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgBondProvider'")
@@ -97,11 +104,19 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 			}
 
 			endBlockEvents := data.ResultEndBlock.Events
-			log.Infof("block %d has %d endBlock events", data.Block.Height, len(endBlockEvents))
+			log.Debugf("block %d with %d endBlock events", data.Block.Height, len(endBlockEvents))
 			for _, evt := range endBlockEvents {
 				switch evt.GetType() {
 				case "validator_payout":
-					log.Infof("validator_payout event")
+					log.Debugf("validator_payout event")
+					validatorPayoutEvent := types.ValidatorPayoutEvent{}
+					if err := convertEvent(tmAttributeSource(nil, evt, uint64(data.Block.Height)), &validatorPayoutEvent); err != nil {
+						log.Errorf("error converting validator_payout event: %+v", err)
+						break
+					}
+					if err := a.handleValidatorPayoutEvent(validatorPayoutEvent); err != nil {
+						log.Errorf("error handling validator_payout event: %+v", err)
+					}
 				case "contract_settlement":
 					log.Debugf("contract_settlement")
 					contractSettlementEvent := types.ContractSettlementEvent{}
@@ -113,10 +128,7 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 						log.Errorf("error handling open_contract event: %+v", err)
 					}
 				}
-				attribs := tmAttributeSource(nil, evt, uint64(data.Block.Height))()
-				log.Infof("%s: %#v", evt.GetType(), attribs)
 			}
-
 		case evt := <-openContractEvents:
 			log.Debugf("received open contract event")
 			openContractEvent := types.OpenContractEvent{}
@@ -328,8 +340,4 @@ func subscribe(client *tmclient.HTTP, query string) <-chan ctypes.ResultEvent {
 		os.Exit(1)
 	}
 	return out
-}
-
-func (a *IndexerApp) handleValidatorPayoutEvent(event types.ValidatorPayoutEvent) error {
-	return fmt.Errorf("not impl")
 }

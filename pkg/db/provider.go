@@ -165,6 +165,16 @@ func (d *DirectoryDB) SearchProviders(criteria types.ProviderSearchParams) ([]*A
 	return providers, nil
 }
 
+func (d *DirectoryDB) UpsertValidatorPayoutEvent(evt types.ValidatorPayoutEvent) (*Entity, error) {
+	conn, err := d.getConnection()
+	defer conn.Release()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error obtaining db connection")
+	}
+
+	return upsert(conn, sqlUpsertValidatorPayoutEvent, evt.Validator, evt.Height, evt.Paid)
+}
+
 func (d *DirectoryDB) InsertBondProviderEvent(providerID int64, evt types.BondProviderEvent) (*Entity, error) {
 	if evt.BondAbsolute == "" {
 		return nil, fmt.Errorf("nil BondAbsolute")

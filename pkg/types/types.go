@@ -55,6 +55,7 @@ type ContractSettlementEvent struct {
 
 type ValidatorPayoutEvent struct {
 	Validator string `mapstructure:"validator"`
+	Height    int64  `mapstructure:"height"`
 	TxID      string `mapstructure:"hash"`
 	Paid      string `mapstructure:"paid"`
 }
