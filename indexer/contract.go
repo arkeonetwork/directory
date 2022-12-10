@@ -49,14 +49,6 @@ func (a *IndexerApp) handleCloseContractEvent(evt types.CloseContractEvent) erro
 
 func (a *IndexerApp) handleContractSettlementEvent(evt types.ContractSettlementEvent) error {
 	log.Infof("receieved contractSettlementEvent %#v", evt)
-	// provider, err := a.db.FindProvider(evt.ProviderPubkey, evt.Chain)
-	// if err != nil {
-	// 	return errors.Wrapf(err, "error finding provider %s for chain %s", evt.ProviderPubkey, evt.Chain)
-	// }
-	// if provider == nil {
-	// 	return fmt.Errorf("cannot claim income provider %s on chain %s DNE", evt.ProviderPubkey, evt.Chain)
-	// }
-	// contract, err := a.db.FindContract(provider.ID, evt.ClientPubkey, evt.Height)
 	contract, err := a.db.FindContractByPubKeys(evt.Chain, evt.ProviderPubkey, evt.GetDelegatePubkey(), evt.Height)
 	if err != nil {
 		return errors.Wrapf(err, "error finding contract provider %s chain %s", evt.ProviderPubkey, evt.Chain)
@@ -67,6 +59,5 @@ func (a *IndexerApp) handleContractSettlementEvent(evt types.ContractSettlementE
 	if _, err = a.db.UpsertContractSettlementEvent(contract.ID, evt); err != nil {
 		return errors.Wrapf(err, "error upserting contract settlement event")
 	}
-
 	return nil
 }

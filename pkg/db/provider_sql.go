@@ -43,6 +43,7 @@ var (
 		values ($1,$2,$3,$4,$5)
 		on conflict on constraint provider_bond_events_txid_unq
 		do update set updated = now()
+		where provider_mod_events.txid = $3
 		returning id, created, updated
 	`
 	sqlInsertModProviderEvent = `
@@ -50,6 +51,7 @@ var (
 		values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
 		on conflict on constraint provider_mod_events_txid_unq
 		do update set updated = now()
+		where provider_mod_events.txid = $3
 		returning id, created, updated
 	`
 	sqlUpsertProviderMetadata = `
@@ -59,5 +61,14 @@ var (
 		on conflict on constraint prov_version_uniq
 		do nothing
 		returning id, created, updated
+	`
+	sqlUpsertValidatorPayoutEvent = `
+	insert into validator_payout_events(validator,height,paid)
+	values ($1,$2,$3)
+	on conflict on constraint validator_payout_evts_validator_height_key
+	do update set updated = now()
+	where validator_payout_events.validator = $1
+	  and validator_payout_events.height = $2
+	returning id, created, updated
 	`
 )

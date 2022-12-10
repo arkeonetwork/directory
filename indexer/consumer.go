@@ -3,7 +3,6 @@ package indexer
 import (
 	"context"
 	"encoding/hex"
-	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
@@ -70,6 +69,14 @@ func tmAttributeSource(tx tmtypes.Tx, evt abcitypes.Event, height uint64) func()
 	return func() map[string]string { return attribs }
 }
 
+func (a *IndexerApp) handleValidatorPayoutEvent(evt types.ValidatorPayoutEvent) error {
+	log.Infof("receieved validatorPayoutEvent %#v", evt)
+	if _, err := a.db.UpsertValidatorPayoutEvent(evt); err != nil {
+		return errors.Wrapf(err, "error upserting validator payout event")
+	}
+	return nil
+}
+
 func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 	blockEvents := subscribe(client, "tm.event = 'NewBlock'")
 	bondProviderEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgBondProvider'")
@@ -122,7 +129,6 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 					}
 				}
 			}
-
 		case evt := <-openContractEvents:
 			log.Debugf("received open contract event")
 			openContractEvent := types.OpenContractEvent{}
@@ -334,8 +340,4 @@ func subscribe(client *tmclient.HTTP, query string) <-chan ctypes.ResultEvent {
 		os.Exit(1)
 	}
 	return out
-}
-
-func (a *IndexerApp) handleValidatorPayoutEvent(event types.ValidatorPayoutEvent) error {
-	return fmt.Errorf("not impl")
 }
