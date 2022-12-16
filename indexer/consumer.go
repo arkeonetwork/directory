@@ -124,6 +124,15 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 					if err := a.handleValidatorPayoutEvent(validatorPayoutEvent); err != nil {
 						log.Errorf("error handling validator_payout event: %+v", err)
 					}
+				case "contract_settlement":
+					contractSettlementEvent := types.ContractSettlementEvent{}
+					if err := convertEvent(tmAttributeSource(nil, evt, uint64(data.Block.Height)), &contractSettlementEvent); err != nil {
+						log.Errorf("error converting contract_settlement event: %+v", err)
+						break
+					}
+					if err := a.handleContractSettlementEvent(contractSettlementEvent); err != nil {
+						log.Errorf("error handling close_contract contract_settlement event: %+v", err)
+					}
 				}
 			}
 		case evt := <-openContractEvents:
@@ -158,7 +167,7 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 			}
 		case evt := <-claimContractIncomeEvents:
 			log.Debugf("received claim contract income event")
-			contractSettlementEvent := types.ContractSettlementEvent{}
+			claimContractIncomeEvent := types.ClaimContractIncomeEvent{}
 			attribs := wsAttributeSource(evt)
 			// hack contract_settlement height
 			wrapped := func() map[string]string {
@@ -168,11 +177,11 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 				}
 				return tmp
 			}
-			if err := convertEvent(wrapped, &contractSettlementEvent); err != nil {
+			if err := convertEvent(wrapped, &claimContractIncomeEvent); err != nil {
 				log.Errorf("error converting open_contract event: %+v", err)
 				break
 			}
-			if err := a.handleContractSettlementEvent(contractSettlementEvent); err != nil {
+			if err := a.handleContractSettlementEvent(claimContractIncomeEvent.ContractSettlementEvent); err != nil {
 				log.Errorf("error handling claim contract income event: %+v", err)
 			}
 		case evt := <-closeContractEvents:

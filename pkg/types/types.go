@@ -53,6 +53,10 @@ type CloseContractEvent struct {
 	ContractSettlementEvent `mapstructure:",squash"`
 }
 
+type ClaimContractIncomeEvent struct {
+	ContractSettlementEvent `mapstructure:",squash"`
+}
+
 type ValidatorPayoutEvent struct {
 	Validator string `mapstructure:"validator"`
 	Height    int64  `mapstructure:"height"`

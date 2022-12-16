@@ -17,6 +17,8 @@ CLIENT_PUBKEY=$bobkey
 
 PAY_AS_YOU_GO=1
 RATE=20
+DEPOSIT=2
+DURATION=10
 
-arkeod tx arkeo open-contract --from $USER $PROVIDER_PUBKEY $CHAIN $CLIENT_PUBKEY $PAY_AS_YOU_GO 20 100 $RATE  -y
+arkeod tx arkeo open-contract --from $USER $PROVIDER_PUBKEY $CHAIN $CLIENT_PUBKEY $PAY_AS_YOU_GO $DEPOSIT $DURATION $RATE  -y
 echo "done"
