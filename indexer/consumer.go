@@ -52,7 +52,6 @@ func tmAttributeSource(tx tmtypes.Tx, evt abcitypes.Event, height uint64) func()
 	attribs := make(map[string]string, 0)
 	for _, attr := range evt.Attributes {
 		attribs[string(attr.Key)] = string(attr.Value)
-		log.Infof("%s: %s", attr.Key, string(attr.Value))
 	}
 
 	if tx != nil {
@@ -108,7 +107,7 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 			for _, evt := range endBlockEvents {
 				switch evt.GetType() {
 				case "validator_payout":
-					log.Debugf("validator_payout event")
+					// log.Debugf("received validator_payout event")
 					validatorPayoutEvent := types.ValidatorPayoutEvent{}
 					if err := convertEvent(tmAttributeSource(nil, evt, uint64(data.Block.Height)), &validatorPayoutEvent); err != nil {
 						log.Errorf("error converting validator_payout event: %+v", err)
@@ -118,7 +117,7 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 						log.Errorf("error handling validator_payout event: %+v", err)
 					}
 				case "contract_settlement":
-					log.Debugf("contract_settlement")
+					log.Debugf("received contract_settlement")
 					contractSettlementEvent := types.ContractSettlementEvent{}
 					if err := convertEvent(tmAttributeSource(nil, evt, uint64(data.Block.Height)), &contractSettlementEvent); err != nil {
 						log.Errorf("error converting contract_settlement event: %+v", err)
@@ -211,6 +210,7 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 			}
 			continue
 		}
+
 		log := log.WithField("height", strconv.FormatUint(a.Height, 10))
 		for _, transaction := range nextBlock.Block.Txs {
 			txInfo, err := client.Tx(context.Background(), transaction.Hash(), false)
@@ -220,8 +220,21 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 			}
 
 			for _, event := range txInfo.TxResult.Events {
-				log.Debugf("received %s event", event.Type)
+				log.Debugf("received %s txevent", event.Type)
 				if err := a.handleAbciEvent(event, transaction); err != nil {
+					log.Errorf("error handling abci event %#v\n%+v", event, err)
+				}
+			}
+
+			// process block results as well
+			blockResults, err := client.BlockResults(context.Background(), &nextHeight)
+			if err != nil {
+				log.Errorf("error reading block results at height %d: %+v", nextHeight, err)
+			}
+
+			for _, event := range blockResults.EndBlockEvents {
+				log.Debugf("received %s txevent", event.Type)
+				if err := a.handleAbciEvent(event, nil); err != nil {
 					log.Errorf("error handling abci event %#v\n%+v", event, err)
 				}
 			}
@@ -323,7 +336,7 @@ func (a *IndexerApp) handleAbciEvent(event abcitypes.Event, transaction tmtypes.
 			log.Errorf("error handling close contract event: %+v", err)
 		}
 	default:
-		log.Warnf("received event %s", event.Type)
+		log.Debugf("ignored event %s", event.Type)
 	}
 	return nil
 }
