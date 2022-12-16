@@ -42,10 +42,6 @@ type OpenContractEvent struct {
 	OpenCost          int64        `mapstructure:"open_cost"`
 }
 
-type CloseContractEvent struct {
-	BaseContractEvent `mapstructure:",squash"`
-}
-
 type ContractSettlementEvent struct {
 	BaseContractEvent `mapstructure:",squash"`
 	Nonce             string `mapstructure:"nonce"`
@@ -53,11 +49,15 @@ type ContractSettlementEvent struct {
 	Reserve           string `mapstructure:"reserve"`
 }
 
+type CloseContractEvent struct {
+	ContractSettlementEvent `mapstructure:",squash"`
+}
+
 type ValidatorPayoutEvent struct {
 	Validator string `mapstructure:"validator"`
 	Height    int64  `mapstructure:"height"`
 	TxID      string `mapstructure:"hash"`
-	Paid      string `mapstructure:"paid"`
+	Paid      int64  `mapstructure:"paid"`
 }
 
 type ProviderStatus string

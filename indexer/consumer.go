@@ -3,6 +3,7 @@ package indexer
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
@@ -70,6 +71,13 @@ func tmAttributeSource(tx tmtypes.Tx, evt abcitypes.Event, height uint64) func()
 
 func (a *IndexerApp) handleValidatorPayoutEvent(evt types.ValidatorPayoutEvent) error {
 	log.Infof("receieved validatorPayoutEvent %#v", evt)
+	if evt.Paid < 0 {
+		return fmt.Errorf("received negative paid amt: %d for tx %s", evt.Paid, evt.TxID)
+	}
+	if evt.Paid == 0 {
+		return nil
+	}
+	log.Infof("upserting validator payout event for tx %s", evt.TxID)
 	if _, err := a.db.UpsertValidatorPayoutEvent(evt); err != nil {
 		return errors.Wrapf(err, "error upserting validator payout event")
 	}
@@ -116,16 +124,6 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 					if err := a.handleValidatorPayoutEvent(validatorPayoutEvent); err != nil {
 						log.Errorf("error handling validator_payout event: %+v", err)
 					}
-				case "contract_settlement":
-					log.Debugf("received contract_settlement")
-					contractSettlementEvent := types.ContractSettlementEvent{}
-					if err := convertEvent(tmAttributeSource(nil, evt, uint64(data.Block.Height)), &contractSettlementEvent); err != nil {
-						log.Errorf("error converting contract_settlement event: %+v", err)
-						break
-					}
-					if err := a.handleContractSettlementEvent(contractSettlementEvent); err != nil {
-						log.Errorf("error handling open_contract event: %+v", err)
-					}
 				}
 			}
 		case evt := <-openContractEvents:
@@ -162,7 +160,15 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 			log.Debugf("received claim contract income event")
 			contractSettlementEvent := types.ContractSettlementEvent{}
 			attribs := wsAttributeSource(evt)
-			if err := convertEvent(attribs, &contractSettlementEvent); err != nil {
+			// hack contract_settlement height
+			wrapped := func() map[string]string {
+				tmp := attribs()
+				if ev, ok := evt.Events["contract_settlement.height"]; ok && len(ev) > 0 {
+					tmp["height"] = evt.Events["contract_settlement.height"][0]
+				}
+				return tmp
+			}
+			if err := convertEvent(wrapped, &contractSettlementEvent); err != nil {
 				log.Errorf("error converting open_contract event: %+v", err)
 				break
 			}
@@ -172,12 +178,26 @@ func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
 		case evt := <-closeContractEvents:
 			log.Debugf("received close_contract event")
 			closeContractEvent := types.CloseContractEvent{}
-			if err := convertEvent(wsAttributeSource(evt), &closeContractEvent); err != nil {
+			attribs := wsAttributeSource(evt)
+			wrapped := func() map[string]string {
+				tmp := attribs()
+				if ev, ok := evt.Events["contract_settlement.height"]; ok && len(ev) > 0 {
+					tmp["height"] = evt.Events["contract_settlement.height"][0]
+				}
+				return tmp
+			}
+
+			if err := convertEvent(wrapped, &closeContractEvent); err != nil {
 				log.Errorf("error converting close_contract event: %+v", err)
 				break
 			}
+
 			if err := a.handleCloseContractEvent(closeContractEvent); err != nil {
-				log.Errorf("error handling close contract event: %+v", err)
+				log.Errorf("error handling close_contract event: %+v", err)
+			}
+
+			if err := a.handleContractSettlementEvent(closeContractEvent.ContractSettlementEvent); err != nil {
+				log.Errorf("error handling close_contract contract_settlement event: %+v", err)
 			}
 		case <-quit:
 			log.Infof("received os quit signal")
@@ -233,7 +253,7 @@ func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
 			}
 
 			for _, event := range blockResults.EndBlockEvents {
-				log.Debugf("received %s txevent", event.Type)
+				log.Debugf("received %s endblock event", event.Type)
 				if err := a.handleAbciEvent(event, nil); err != nil {
 					log.Errorf("error handling abci event %#v\n%+v", event, err)
 				}

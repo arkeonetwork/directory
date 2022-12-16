@@ -50,16 +50,6 @@ var (
 	order by c.id desc
 	`
 	sqlFindContractByPubKeys = `select ` + contractCols + `
-	-- c.id,
-	-- c.created,
-	-- c.updated,
-	-- c.provider_id,
-	-- c.delegate_pubkey,
-	-- c.client_pubkey,
-	-- c.contract_type,
-	-- c.duration,
-	-- c.rate,
-	-- c.open_cost
 	from providers p join contracts c on p.id = c.provider_id
 	where p.chain = $1 and p.pubkey = $2 and c.delegate_pubkey = $3 and c.height = $4
 	`
