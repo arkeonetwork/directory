@@ -147,9 +147,9 @@ func (d *DirectoryDB) SearchProviders(criteria types.ProviderSearchParams) ([]*A
 	case types.ProviderSortKeyAge:
 		sb = sb.OrderBy("created").Asc()
 	case types.ProviderSortKeyContractCount:
-		// TODO
+		sb = sb.OrderBy("contract_count").Desc()
 	case types.ProviderSortKeyAmountPaid:
-		// TODO
+		sb = sb.OrderBy("total_paid").Desc()
 	default:
 		return nil, fmt.Errorf("not a valid sortKey %s", criteria.SortKey)
 	}

@@ -96,7 +96,7 @@ var (
 	ProviderSortKeyNone          ProviderSortKey = ""
 	ProviderSortKeyAge           ProviderSortKey = "age"
 	ProviderSortKeyContractCount ProviderSortKey = "contract_count"
-	ProviderSortKeyAmountPaid    ProviderSortKey = "anount_paid"
+	ProviderSortKeyAmountPaid    ProviderSortKey = "amount_paid"
 )
 
 type ProviderSearchParams struct {

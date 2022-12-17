@@ -1,4 +1,4 @@
-create view providers_base_v as
+create or replace view providers_base_v as
 (
 with indexed_height as (select height
                         from indexer_status
@@ -21,6 +21,12 @@ select p.id,
        (select min(bond_evts.height)
         from provider_bond_events bond_evts
         where bond_evts.provider_id = p.id)                                   as birth_height,
-       (select indexed_height.height from indexed_height)                        cur_height
+       (select indexed_height.height from indexed_height)                        cur_height,
+        (
+            select sum(paid)
+            from contracts c
+                join contract_settlement_events settle_events on c.id = settle_events.contract_id
+            where c.provider_id = p.id
+        ) as total_paid
 from providers p
     );
