@@ -1,12 +1,18 @@
 package utils
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
 	"math"
+	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
+
+	"net/http"
+	"net/url"
 
 	"github.com/ArkeoNetwork/directory/pkg/sentinel"
 	"github.com/ArkeoNetwork/directory/pkg/types"
@@ -54,21 +60,59 @@ func ValidateChain(chain string) (ok bool) {
 	return
 }
 
-func DownloadProviderMetadata(url string, retries int, maxBytes int) (*sentinel.Metadata, error) {
+func readFromNetwork(u *url.URL, retries int, maxBytes int) ([]byte, error) {
 	client := resty.New()
-	var result sentinel.Metadata
+
 	client.SetRetryCount(retries)
 	client.SetTimeout(time.Second * 5)
 	client.SetHeader("Accept", "application/json")
-	resp, err := client.R().ForceContentType("application/json").SetResult(&result).Get(url)
-
+	resp, err := client.R().ForceContentType("application/json").Get(u.String())
 	if err != nil {
 		return nil, err
 	}
 
-	if len(resp.Body()) > maxBytes {
-		return nil, errors.New("DownloadProviderMetadata: max bytes exceeded")
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("http status %d", resp.StatusCode())
 	}
 
-	return &result, nil
+	body := resp.Body()
+	if len(body) > maxBytes {
+		return nil, errors.New("DownloadProviderMetadata: max bytes exceeded")
+	}
+	return body, nil
+}
+
+func readFromFilesystem(u *url.URL) (raw []byte, err error) {
+	full := fmt.Sprintf("/%s%s", u.Host, u.Path)
+	if raw, err = os.ReadFile(full); err != nil {
+		return nil, errors.Wrapf(err, "error reading file %s", full)
+	}
+	return raw, nil
+}
+
+func DownloadProviderMetadata(metadataUrl string, retries int, maxBytes int) (*sentinel.Metadata, error) {
+
+	u, err := url.Parse(metadataUrl)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error parsing url %s", metadataUrl)
+	}
+
+	var raw []byte
+	switch u.Scheme {
+	case "file":
+		if raw, err = readFromFilesystem(u); err != nil {
+			return nil, errors.Wrapf(err, "error reading metadata from fs")
+		}
+	default:
+		if raw, err = readFromNetwork(u, retries, maxBytes); err != nil {
+			return nil, errors.Wrapf(err, "error reading metadata from fs")
+		}
+	}
+
+	result := &sentinel.Metadata{}
+	if err = json.Unmarshal(raw, result); err != nil {
+		return nil, errors.Wrapf(err, "error unmarshaling")
+	}
+
+	return result, nil
 }
