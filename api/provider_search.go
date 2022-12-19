@@ -33,7 +33,7 @@ import (
 //     schema:
 //      type: string
 //      enum: age, conract_count, amount_paid
-//   + name: maxDistance
+//   + name: max-distance
 //     in: query
 //     description: maximum distance in kilometers from provided coordinates
 //     required: false
@@ -83,7 +83,7 @@ func (a *ApiService) searchProviders(response http.ResponseWriter, request *http
 	sort := request.FormValue("sort")
 	chain := request.FormValue("chain")
 	pubkey := request.FormValue("pubkey")
-	maxDistanceInput := request.FormValue("maxDistance")
+	maxDistanceInput := request.FormValue("max-distance")
 	coordinatesInput := request.FormValue("coordinates")
 	minValidatorPaymentsInput := request.FormValue("min-validator-payments")
 	minProviderAgeInput := request.FormValue("min-provider-age")
@@ -92,7 +92,7 @@ func (a *ApiService) searchProviders(response http.ResponseWriter, request *http
 	minSubscribeRateLimitInput := request.FormValue("min-subscription-rate-limit")
 	minOpenContractsInput := request.FormValue("min-open-contracts")
 
-	if maxDistanceInput != "" && coordinatesInput == "" || coordinatesInput != "" && maxDistanceInput == "" {
+	if (maxDistanceInput != "" && coordinatesInput == "") || (coordinatesInput != "" && maxDistanceInput == "") {
 		respondWithError(response, http.StatusBadRequest, "max distance must accompany coordinates when supplied")
 		return
 	}
