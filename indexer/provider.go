@@ -3,6 +3,7 @@ package indexer
 import (
 	"fmt"
 	"net/url"
+	"strconv"
 
 	"github.com/ArkeoNetwork/directory/pkg/db"
 	"github.com/ArkeoNetwork/directory/pkg/types"
@@ -19,7 +20,9 @@ func (a *IndexerApp) handleModProviderEvent(evt types.ModProviderEvent) error {
 		return fmt.Errorf("cannot mod provider, DNE %s %s", evt.Pubkey, evt.Chain)
 	}
 
-	isMetaDataUpdated := provider.MetadataNonce < evt.MetadataNonce
+	log := log.WithField("provider", strconv.FormatInt(provider.ID, 10))
+
+	isMetaDataUpdated := provider.MetadataNonce == 0 || provider.MetadataNonce < evt.MetadataNonce
 	provider.MetadataURI = evt.MetadataURI
 	provider.MetadataNonce = evt.MetadataNonce
 	provider.Status = evt.Status
@@ -51,6 +54,12 @@ func (a *IndexerApp) handleModProviderEvent(evt types.ModProviderEvent) error {
 		return nil
 	}
 
+	if providerMetadata == nil {
+		log.Errorf("nil providerMetadata for %s", provider.MetadataURI)
+		return nil
+	}
+
+	providerMetadata.Configuration.Nonce = int64(provider.MetadataNonce)
 	if _, err = a.db.UpsertProviderMetadata(provider.ID, *providerMetadata); err != nil {
 		return errors.Wrapf(err, "error updating provider metadta for mod event %s chain %s", provider.Pubkey, provider.Chain)
 	}
