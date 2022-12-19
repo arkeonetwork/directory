@@ -45,12 +45,12 @@ func (a *IndexerApp) handleModProviderEvent(evt types.ModProviderEvent) error {
 
 	log.Debugf("updating provider metadata for provider %s", provider.Pubkey)
 	if !validateMetadataURI(provider.MetadataURI) {
-		log.Warnf("updating provider metadata for provider %s failed due to bad MetadataURI %s", provider.MetadataURI)
+		log.Warnf("updating provider metadata for provider %s failed due to bad MetadataURI %s", provider.Pubkey, provider.MetadataURI)
 		return nil
 	}
 	providerMetadata, err := utils.DownloadProviderMetadata(provider.MetadataURI, 5, 1e6)
 	if err != nil {
-		log.Warnf("updating provider metadata for provider %s failed %v", err)
+		log.Warnf("updating provider metadata for provider %s failed %v", provider.Pubkey, err)
 		return nil
 	}
 
