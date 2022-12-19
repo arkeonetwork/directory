@@ -19,7 +19,7 @@ func (a *IndexerApp) handleModProviderEvent(evt types.ModProviderEvent) error {
 		return fmt.Errorf("cannot mod provider, DNE %s %s", evt.Pubkey, evt.Chain)
 	}
 
-	isMetaDataUpdated := provider.MetadataNonce != evt.MetadataNonce
+	isMetaDataUpdated := provider.MetadataNonce < evt.MetadataNonce
 	provider.MetadataURI = evt.MetadataURI
 	provider.MetadataNonce = evt.MetadataNonce
 	provider.Status = evt.Status
@@ -50,6 +50,7 @@ func (a *IndexerApp) handleModProviderEvent(evt types.ModProviderEvent) error {
 		log.Warnf("updating provider metadata for provider %s failed %v", err)
 		return nil
 	}
+
 	if _, err = a.db.UpsertProviderMetadata(provider.ID, *providerMetadata); err != nil {
 		return errors.Wrapf(err, "error updating provider metadta for mod event %s chain %s", provider.Pubkey, provider.Chain)
 	}

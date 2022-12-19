@@ -54,7 +54,7 @@ func (a *IndexerApp) handleContractSettlementEvent(evt types.ContractSettlementE
 		return errors.Wrapf(err, "error finding contract provider %s chain %s", evt.ProviderPubkey, evt.Chain)
 	}
 	if contract == nil {
-		return fmt.Errorf("no contract found for %s:%s delegPub: %s", evt.ProviderPubkey, evt.Chain, evt.ClientPubkey)
+		return fmt.Errorf("no contract found for provider %s:%s delegPub: %s height %d", evt.ProviderPubkey, evt.Chain, evt.GetDelegatePubkey(), evt.Height)
 	}
 	if _, err = a.db.UpsertContractSettlementEvent(contract.ID, evt); err != nil {
 		return errors.Wrapf(err, "error upserting contract settlement event")

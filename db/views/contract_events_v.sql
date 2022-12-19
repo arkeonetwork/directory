@@ -1,4 +1,4 @@
-create view contract_events_v as
+create or replace view contract_events_v as
 (
 with evts as (
     select id, contract_id, txid, created, height, 'open_contract' as evt_name

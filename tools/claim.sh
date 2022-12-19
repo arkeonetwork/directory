@@ -10,7 +10,7 @@ then
   NONCE=1
 fi
 
-CHAIN=btc-mainnet-fullnode
+CHAIN=eth-mainnet-fullnode
 
 USER=bob
 PROVIDER_PUBKEY=$alicekey

@@ -4,7 +4,7 @@ BASEDIR=$(dirname "$0")
 source $BASEDIR/env.sh
 
 # increment each invocation
-CHAIN=btc-mainnet-fullnode
+CHAIN=eth-mainnet-fullnode
 
 USER=bob
 PROVIDER_PUBKEY=$alicekey

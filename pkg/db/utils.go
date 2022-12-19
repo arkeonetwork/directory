@@ -45,6 +45,7 @@ func update(conn *pgxpool.Conn, sql string, params ...interface{}) (*Entity, err
 
 // if the query returns no rows, the passed target remains unchanged. target must be a pointer
 func selectOne(conn *pgxpool.Conn, sql string, target interface{}, params ...interface{}) error {
+	log.Debugf("sql: %s\nparams: %v", sql, params)
 	if err := pgxscan.Get(context.Background(), conn, target, sql, params...); err != nil {
 		unwrapped := errors.Unwrap(err)
 		if unwrapped != nil && unwrapped.Error() == "no rows in result set" {
