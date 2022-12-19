@@ -43,7 +43,7 @@ var (
 		values ($1,$2,$3,$4,$5)
 		on conflict on constraint provider_bond_events_txid_unq
 		do update set updated = now()
-		where provider_mod_events.txid = $3
+		where provider_bond_events.txid = $3
 		returning id, created, updated
 	`
 	sqlInsertModProviderEvent = `
@@ -55,11 +55,13 @@ var (
 		returning id, created, updated
 	`
 	sqlUpsertProviderMetadata = `
-		insert into provider_metadata(provider_id,version,moniker,website,description,location,port,proxy_host,source_chain,event_stream_host,claim_store_location,
+		insert into provider_metadata(provider_id,nonce,moniker,website,description,location,port,proxy_host,source_chain,event_stream_host,claim_store_location,
 			free_rate_limit,free_rate_limit_duration,subscribe_rate_limit,subscribe_rate_limit_duration,paygo_rate_limit,paygo_rate_limit_duration)
-		values ($1,$2,$3,$4,CAST(NULLIF($5, '') AS point),$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
-		on conflict on constraint prov_version_uniq
-		do nothing
+		values ($1,$2,$3,$4,$5,CAST(NULLIF($6, '') AS point),$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+		on conflict on constraint prov_metanonce_uniq
+		do update set updated = now()
+		where provider_metadata.provider_id = $1
+		  and provider_metadata.nonce = $2
 		returning id, created, updated
 	`
 	sqlUpsertValidatorPayoutEvent = `

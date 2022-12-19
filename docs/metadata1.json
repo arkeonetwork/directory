@@ -1,0 +1,21 @@
+{
+  "config": {
+    "moniker": "arkeoval1",
+    "website": "https://shapeshift.com/",
+    "description": "ShapeShift Arkeo Validator",
+    "location": "40.0176,-105.27",
+    "port": "3636",
+    "proxy_host": "https://swapi.dev",
+    "source_chain": "arkeod:1317",
+    "event_stream_host": "arkeod:26657",
+    "claim_store_location": "/root/.arkeo/claims",
+    "provider_pubkey": "arkeopub1addwnpepqvux8e2jmx46mfve0tgec0v4th2t5xlzrv25g63tne6lzh7yd0m9ylgykzp",
+    "free_tier_rate_limit": 10,
+    "free_tier_rate_limit_duration": 60000000000,
+    "subscription_tier_rate_limit": 100,
+    "subscription_tier_rate_limit_duration": 60000000000,
+    "pay_as_you_go_tier_rate_limit": 50,
+    "pay_as_you_go_tier_rate_limit_duration": 60000000000
+  },
+  "version": "0.1.1"
+}

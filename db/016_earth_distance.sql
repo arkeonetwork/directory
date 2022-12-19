@@ -1,5 +1,5 @@
-CREATE EXTENSION cube;
-CREATE EXTENSION earthdistance;
+CREATE EXTENSION if not exists cube;
+CREATE EXTENSION if not exists earthdistance;
 
 ALTER TABLE provider_metadata ALTER COLUMN location TYPE point USING location::point;
 

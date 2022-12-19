@@ -6,6 +6,7 @@ import (
 )
 
 type Configuration struct {
+	Nonce                     int64         `json:"-"`
 	Moniker                   string        `json:"moniker"`
 	Website                   string        `json:"website"`
 	Description               string        `json:"description"`

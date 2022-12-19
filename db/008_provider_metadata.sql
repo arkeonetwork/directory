@@ -6,7 +6,8 @@ create table provider_metadata
     created                       timestamptz default now() not null,
     updated                       timestamptz default now() not null,
     provider_id                   bigint                    not null references providers (id),
-    version                       text                      not null,
+    nonce                         numeric not null,
+    version                       text,
     moniker                       text,
     website                       text,
     description                   text,
@@ -25,7 +26,7 @@ create table provider_metadata
 );
 
 alter table provider_metadata
-    add constraint prov_version_uniq unique (provider_id, version);
+    add constraint prov_metanonce_uniq unique (provider_id, nonce);
 
 ---- create above / drop below ----
 drop table provider_metadata;
