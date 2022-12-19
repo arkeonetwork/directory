@@ -112,10 +112,10 @@ func (d *DirectoryDB) SearchProviders(criteria types.ProviderSearchParams) ([]*A
 
 	// Filter
 	if criteria.Pubkey != "" {
-		sb = sb.Where(sb.Equal("pubkey", criteria.Pubkey))
+		sb = sb.Where(sb.Equal("p.pubkey", criteria.Pubkey))
 	}
 	if criteria.Chain != "" {
-		sb = sb.Where(sb.Equal("chain", criteria.Chain))
+		sb = sb.Where(sb.Equal("p.chain", criteria.Chain))
 	}
 	if criteria.IsMaxDistanceSet || criteria.IsMinFreeRateLimitSet || criteria.IsMinPaygoRateLimitSet || criteria.IsMinSubscribeRateLimitSet {
 		sb = sb.JoinWithOption(sqlbuilder.LeftJoin, "provider_metadata", "p.id = provider_metadata.provider_id and p.metadata_nonce = provider_metadata.nonce")
@@ -149,11 +149,11 @@ func (d *DirectoryDB) SearchProviders(criteria types.ProviderSearchParams) ([]*A
 	case types.ProviderSortKeyNone:
 		// NOP
 	case types.ProviderSortKeyAge:
-		sb = sb.OrderBy("created").Asc()
+		sb = sb.OrderBy("p.created").Asc()
 	case types.ProviderSortKeyContractCount:
-		sb = sb.OrderBy("contract_count").Desc()
+		sb = sb.OrderBy("p.contract_count").Desc()
 	case types.ProviderSortKeyAmountPaid:
-		sb = sb.OrderBy("total_paid").Desc()
+		sb = sb.OrderBy("p.total_paid").Desc()
 	default:
 		return nil, fmt.Errorf("not a valid sortKey %s", criteria.SortKey)
 	}
