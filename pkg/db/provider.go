@@ -117,9 +117,21 @@ func (d *DirectoryDB) SearchProviders(criteria types.ProviderSearchParams) ([]*A
 	if criteria.Chain != "" {
 		sb = sb.Where(sb.Equal("chain", criteria.Chain))
 	}
-	if criteria.IsMinRateLimitSet {
-		sb = sb.JoinWithOption(sqlbuilder.LeftJoin, "provider_metadata", "p.id = provider_metadata.provider_id") //("provider_metadata")
-		sb = sb.Where(sb.GE("provider_metadata.paygo_rate_limit", criteria.MinRateLimit))
+	if criteria.IsMaxDistanceSet || criteria.IsMinFreeRateLimitSet || criteria.IsMinPaygoRateLimitSet || criteria.IsMinSubscribeRateLimitSet {
+		sb = sb.JoinWithOption(sqlbuilder.LeftJoin, "provider_metadata", "p.id = provider_metadata.provider_id and p.metadata_nonce = provider_metadata.nonce")
+	}
+	if criteria.IsMaxDistanceSet {
+		// note psql using long,lat instead of the normal lat,long per https://www.postgresql.org/docs/current/earthdistance.html
+		sb = sb.Where(sb.LessEqualThan(fmt.Sprintf("provider_metadata.location<@>point(%.5f,%.5f)", criteria.Coordinates.Longitude, criteria.Coordinates.Latitude), criteria.MaxDistance))
+	}
+	if criteria.IsMinFreeRateLimitSet {
+		sb = sb.Where(sb.GE("provider_metadata.free_rate_limit", criteria.MinFreeRateLimit))
+	}
+	if criteria.IsMinPaygoRateLimitSet {
+		sb = sb.Where(sb.GE("provider_metadata.paygo_rate_limit", criteria.MinPaygoRateLimit))
+	}
+	if criteria.IsMinPaygoRateLimitSet {
+		sb = sb.Where(sb.GE("provider_metadata.subscribe_rate_limit", criteria.MinSubscribeRateLimit))
 	}
 	if criteria.IsMinProviderAgeSet {
 		sb = sb.Where(sb.GE("p.age", criteria.MinProviderAge))
@@ -130,14 +142,6 @@ func (d *DirectoryDB) SearchProviders(criteria types.ProviderSearchParams) ([]*A
 	}
 	if criteria.IsMinValidatorPaymentsSet {
 		sb = sb.Where(sb.GE("p.total_paid", criteria.MinValidatorPayments))
-	}
-	if criteria.IsMaxDistanceSet {
-		if !criteria.IsMinRateLimitSet {
-			// we haven't joined on provider id yet
-			sb = sb.JoinWithOption(sqlbuilder.LeftJoin, "provider_metadata", "p.id = provider_metadata.provider_id")
-		}
-		// note psql using long,lat instead of the normal lat,long per https://www.postgresql.org/docs/current/earthdistance.html
-		sb = sb.Where(sb.LessEqualThan(fmt.Sprintf("provider_metadata.location<@>point(%.5f,%.5f)", criteria.Coordinates.Longitude, criteria.Coordinates.Latitude), criteria.MaxDistance))
 	}
 
 	// Sort

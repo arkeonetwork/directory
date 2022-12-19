@@ -53,8 +53,18 @@ import (
 //     in: query
 //     required: false
 //     type: integer
-//   + name: min-rate-limit
-//	   description: min rate limit of provider in requests per seconds
+//   + name: min-free-rate-limit
+//	   description: min rate limit for free tier of provider in requests per seconds
+//     in: query
+//     required: false
+//	   type: integer
+//   + name: min-payasyougo-rate-limit
+//	   description: min rate limit for pay-as-you-go tier of provider in requests per seconds
+//     in: query
+//     required: false
+//	   type: integer
+//   + name: min-subscription-rate-limit
+//	   description: min rate limit for subscription tier of provider in requests per seconds
 //     in: query
 //     required: false
 //	   type: integer
@@ -77,7 +87,9 @@ func (a *ApiService) searchProviders(response http.ResponseWriter, request *http
 	coordinatesInput := request.FormValue("coordinates")
 	minValidatorPaymentsInput := request.FormValue("min-validator-payments")
 	minProviderAgeInput := request.FormValue("min-provider-age")
-	minRateLimitInput := request.FormValue("min-rate-limit")
+	minFreeRateLimitInput := request.FormValue("min-free-rate-limit")
+	minPaygoRateLimitInput := request.FormValue("min-payasyougo-rate-limit")
+	minSubscribeRateLimitInput := request.FormValue("min-subscription-rate-limit")
 	minOpenContractsInput := request.FormValue("min-open-contracts")
 
 	if maxDistanceInput != "" && coordinatesInput == "" || coordinatesInput != "" && maxDistanceInput == "" {
@@ -146,22 +158,44 @@ func (a *ApiService) searchProviders(response http.ResponseWriter, request *http
 		searchParams.IsMinProviderAgeSet = true
 	}
 
-	if minRateLimitInput != "" {
+	if minFreeRateLimitInput != "" {
 		var err error
-		minRateLimit, err := strconv.ParseInt(minRateLimitInput, 10, 64)
+		minFreeRateLimit, err := strconv.ParseInt(minFreeRateLimitInput, 10, 64)
 		if err != nil {
-			respondWithError(response, http.StatusBadRequest, "min-rate-limit can not be parsed")
+			respondWithError(response, http.StatusBadRequest, "min-free-rate-limit can not be parsed")
 			return
 		}
-		searchParams.IsMinRateLimitSet = true
-		searchParams.MinRateLimit = minRateLimit
+		searchParams.IsMinFreeRateLimitSet = true
+		searchParams.MinFreeRateLimit = minFreeRateLimit
+	}
+
+	if minPaygoRateLimitInput != "" {
+		var err error
+		minPaygoRateLimit, err := strconv.ParseInt(minPaygoRateLimitInput, 10, 64)
+		if err != nil {
+			respondWithError(response, http.StatusBadRequest, "min-payasyougo-rate-limit can not be parsed")
+			return
+		}
+		searchParams.IsMinPaygoRateLimitSet = true
+		searchParams.MinPaygoRateLimit = minPaygoRateLimit
+	}
+
+	if minSubscribeRateLimitInput != "" {
+		var err error
+		minSubscribeRateLimit, err := strconv.ParseInt(minSubscribeRateLimitInput, 10, 64)
+		if err != nil {
+			respondWithError(response, http.StatusBadRequest, "min-subscription-rate-limit can not be parsed")
+			return
+		}
+		searchParams.IsMinSubscribeRateLimitSet = true
+		searchParams.MinSubscribeRateLimit = minSubscribeRateLimit
 	}
 
 	if minOpenContractsInput != "" {
 		var err error
 		minOpenContracts, err := strconv.ParseInt(minOpenContractsInput, 10, 64)
 		if err != nil {
-			respondWithError(response, http.StatusBadRequest, "min-rate-limit can not be parsed")
+			respondWithError(response, http.StatusBadRequest, "min-open-contracts can not be parsed")
 			return
 		}
 		searchParams.MinOpenContracts = minOpenContracts

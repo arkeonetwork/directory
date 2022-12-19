@@ -100,18 +100,22 @@ var (
 )
 
 type ProviderSearchParams struct {
-	Pubkey                    string
-	Chain                     string
-	SortKey                   ProviderSortKey
-	MaxDistance               int64
-	IsMaxDistanceSet          bool
-	Coordinates               Coordinates
-	MinValidatorPayments      int64
-	IsMinValidatorPaymentsSet bool
-	MinProviderAge            int64
-	IsMinProviderAgeSet       bool
-	MinRateLimit              int64
-	IsMinRateLimitSet         bool
-	MinOpenContracts          int64
-	IsMinOpenContractsSet     bool
+	Pubkey                     string
+	Chain                      string
+	SortKey                    ProviderSortKey
+	MaxDistance                int64
+	IsMaxDistanceSet           bool
+	Coordinates                Coordinates
+	MinValidatorPayments       int64
+	IsMinValidatorPaymentsSet  bool
+	MinProviderAge             int64
+	IsMinProviderAgeSet        bool
+	MinFreeRateLimit           int64
+	IsMinFreeRateLimitSet      bool
+	MinPaygoRateLimit          int64
+	IsMinPaygoRateLimitSet     bool
+	MinSubscribeRateLimit      int64
+	IsMinSubscribeRateLimitSet bool
+	MinOpenContracts           int64
+	IsMinOpenContractsSet      bool
 }
