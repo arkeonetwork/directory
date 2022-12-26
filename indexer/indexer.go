@@ -48,20 +48,34 @@ func (a *IndexerApp) Run() (done <-chan struct{}, err error) {
 	return a.done, nil
 }
 
-func (a *IndexerApp) start() {
-	log.Infof("starting realtime indexing using /websocket at %s", a.params.TendermintWs)
-	client, err := tmclient.New(a.params.TendermintWs, "/websocket")
+func makeTMClient(baseURL string) (*tmclient.HTTP, error) {
+	client, err := tmclient.New(baseURL, "/websocket")
 	if err != nil {
-		log.Errorf("failure to create websocket client: %+v", err)
-		panic(err)
+		return nil, errors.Wrapf(err, "error creating websocket client")
 	}
 	logger := tmlog.NewTMLogger(tmlog.NewSyncWriter(os.Stdout))
 	client.SetLogger(logger)
-	err = client.Start()
-	if err != nil {
-		panic(fmt.Sprintf("error starting client: %+v", err))
+
+	return client, nil
+}
+
+const numClients = 3
+
+func (a *IndexerApp) start() {
+	log.Infof("starting realtime indexing using /websocket at %s", a.params.TendermintWs)
+	clients := make([]*tmclient.HTTP, numClients)
+	for i := 0; i < numClients; i++ {
+		client, err := makeTMClient(a.params.TendermintWs)
+		if err != nil {
+			panic(fmt.Sprintf("error creating tm client for %s: %+v", a.params.TendermintWs, err))
+		}
+		if err = client.Start(); err != nil {
+			panic(fmt.Sprintf("error starting ws client: %s: %+v", a.params.TendermintWs, err))
+		}
+		defer client.Stop()
+		clients[i] = client
 	}
-	defer client.Stop()
+
 	// determine last seen block from db
 	indexerStatus, err := a.db.FindIndexerStatus(a.params.IndexerID)
 	if err != nil {
@@ -70,35 +84,29 @@ func (a *IndexerApp) start() {
 
 	a.IsSynced.Store(false)
 	if indexerStatus == nil {
-		// this is the first time we have started the indexer wit this db, sync from heigh of 1 (0 will fail)
-		a.Height = 1
-	} else {
-		// we have existing records, roll back 600 blocks on startup to ensure we have not missed any events due to crashing, etc.
-		var rollbackBlocks uint64 = 600
-		if indexerStatus.Height > rollbackBlocks {
-			a.Height = indexerStatus.Height - rollbackBlocks
-		} else {
-			a.Height = 1
+		// this is the first time we have started the indexer with this db, sync from heigh of 1 (0 will fail)
+		indexerStatus = &db.IndexerStatus{ID: 0, Height: 0}
+		if _, err = a.db.UpdateIndexerStatus(indexerStatus); err != nil {
+			log.Errorf("error writing initial indexer status: %+v", err)
 		}
 	}
+	a.Height = indexerStatus.Height
 
-	historicalEventCompleted := make(chan bool)
-	go func(complete chan bool) {
+	go func() {
 		// We kick off new thread to background historical sync while we keep consuming events that are coming in real time.
 		// this should ensure that we don't miss any events since we will end up overlapping with out real time WS subscriptions
 		log.Infof("Starting historical syncing from block height: %d", a.Height)
-		err := a.consumeHistoricalEvents(client)
+		err := a.consumeHistoricalEvents(clients[0])
 		if err != nil {
 			log.Infof("Historical syncing failed")
-			complete <- false
 			panic(fmt.Sprintf("Historical syncing failed: %+v", err))
 		}
 		log.Infof("Historical syncing completed")
 		a.IsSynced.Store(true)
-		complete <- true
-	}(historicalEventCompleted)
+	}()
+
 	// since we dont' want to block here, not sure the historicalEventCompleted is even needed
-	a.consumeEvents(client)
+	a.consumeEvents(clients)
 	a.done <- struct{}{}
 }
 
