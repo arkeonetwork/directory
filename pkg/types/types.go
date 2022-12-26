@@ -119,3 +119,28 @@ type ProviderSearchParams struct {
 	MinOpenContracts           int64
 	IsMinOpenContractsSet      bool
 }
+
+// swagger:model ArkeoStats
+type ArkeoStats struct {
+	ContractsOpen           int64 `db:"open_contracts"`
+	ContractsTotal          int64 `db:"total_contracts"`
+	ContractsMedianDuration int64 `db:"median_open_contract_length"`
+	ContractsMedianRate     int64 `db:"median_open_contract_rate"`
+	ProviderCount           int64 `db:"total_online_providers"`
+	QueryCount              int64 `db:"total_queries"`
+	TotalIncome             int64 `db:"total_paid"`
+	// TODO: in the future we can add more complicated structure
+	// ContractsMedianRatePayPer       int64
+	// ContractsMedianRateSubscription int64
+	// ChainStats                      map[string]*ChainStats
+}
+
+// swagger:model ChainStats
+type ChainStats struct {
+	Chain              string
+	ProviderCount      int64
+	QueryCount         int64
+	QueryCountLastDay  int64
+	TotalIncome        int64
+	TotalIncomeLastDay int64
+}
