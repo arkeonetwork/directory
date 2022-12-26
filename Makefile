@@ -32,3 +32,6 @@ db-migrate:
 
 lint:
 	@./scripts/lint.sh
+
+install:
+	go install ./cmd/...

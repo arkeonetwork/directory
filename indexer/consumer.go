@@ -84,13 +84,14 @@ func (a *IndexerApp) handleValidatorPayoutEvent(evt types.ValidatorPayoutEvent) 
 	return nil
 }
 
-func (a *IndexerApp) consumeEvents(client *tmclient.HTTP) error {
-	blockEvents := subscribe(client, "tm.event = 'NewBlock'")
-	bondProviderEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgBondProvider'")
-	modProviderEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgModProvider'")
-	openContractEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgOpenContract'")
-	closeContractEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgCloseContract'")
-	claimContractIncomeEvents := subscribe(client, "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgClaimContractIncome'")
+func (a *IndexerApp) consumeEvents(clients []*tmclient.HTTP) error {
+	// splitting across multiple tendermint clients as websocket allows max of 5 subscriptions per client
+	blockEvents := subscribe(clients[0], "tm.event = 'NewBlock'")
+	bondProviderEvents := subscribe(clients[0], "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgBondProvider'")
+	modProviderEvents := subscribe(clients[0], "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgModProvider'")
+	openContractEvents := subscribe(clients[1], "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgOpenContract'")
+	closeContractEvents := subscribe(clients[1], "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgCloseContract'")
+	claimContractIncomeEvents := subscribe(clients[1], "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgClaimContractIncome'")
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)

@@ -5,6 +5,3 @@ alter table contracts
 
 ---- create above / drop below ----
 alter table contracts drop constraint contracts_provider_delegate_height_key;
-
-alter table contracts
-    add constraint pubkey_prov_dlgt_uniq unique (provider_id, delegate_pubkey);
