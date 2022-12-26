@@ -105,7 +105,6 @@ func (a *IndexerApp) start() {
 		a.IsSynced.Store(true)
 	}()
 
-	// since we dont' want to block here, not sure the historicalEventCompleted is even needed
 	a.consumeEvents(clients)
 	a.done <- struct{}{}
 }
