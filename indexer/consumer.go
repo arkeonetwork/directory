@@ -85,6 +85,7 @@ func (a *IndexerApp) handleValidatorPayoutEvent(evt types.ValidatorPayoutEvent) 
 }
 
 func (a *IndexerApp) consumeEvents(clients []*tmclient.HTTP) error {
+	// splitting across multiple tendermint clients as websocket allows max of 5 subscriptions per client
 	blockEvents := subscribe(clients[0], "tm.event = 'NewBlock'")
 	bondProviderEvents := subscribe(clients[0], "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgBondProvider'")
 	modProviderEvents := subscribe(clients[0], "tm.event = 'Tx' AND message.action='/arkeo.arkeo.MsgModProvider'")
