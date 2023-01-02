@@ -3,28 +3,9 @@ package api
 import (
 	"net/http"
 
+	"github.com/ArkeoNetwork/directory/pkg/types"
 	"github.com/gorilla/mux"
 )
-
-// swagger:model ArkeoStats
-type ArkeoStats struct {
-	ContractsOpen                   int64
-	ContractsTotal                  int64
-	ContractsMedianDuration         int64
-	ContractsMedianRatePayPer       int64
-	ContractsMedianRateSubscription int64
-	ChainStats                      map[string]*ChainStats
-}
-
-// swagger:model ChainStats
-type ChainStats struct {
-	Chain              string
-	ProviderCount      int64
-	QueryCount         int64
-	QueryCountLastDay  int64
-	TotalIncome        int64
-	TotalIncomeLastDay int64
-}
 
 // swagger:route Get /stats getStatsArkeo
 //
@@ -34,8 +15,14 @@ type ChainStats struct {
 //
 //	200: ArkeoStats
 //	500: InternalServerError
-func getStatsArkeo(w http.ResponseWriter, r *http.Request) {
-	respondWithJSON(w, http.StatusOK, &ArkeoStats{})
+func (a *ApiService) getStatsArkeo(w http.ResponseWriter, r *http.Request) {
+	arkeoStats, err := a.db.GetArkeoNetworkStats()
+	if err != nil {
+		log.Error("error finding stats for Arkeo Network")
+		respondWithError(w, http.StatusInternalServerError, "error finding stats for Arkeo Network")
+		return
+	}
+	respondWithJSON(w, http.StatusOK, arkeoStats)
 }
 
 // swagger:route Get /stats/{chain} getStatsChain
@@ -60,5 +47,5 @@ func getStatsChain(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusBadRequest, "chain is required")
 		return
 	}
-	respondWithJSON(w, http.StatusOK, &ChainStats{})
+	respondWithJSON(w, http.StatusOK, &types.ChainStats{})
 }

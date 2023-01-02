@@ -59,7 +59,7 @@ func (a *ApiService) start(doneChan chan struct{}) {
 func buildRouter(a *ApiService) *mux.Router {
 	router := mux.NewRouter()
 	router.HandleFunc("/health", handleHealth).Methods(http.MethodGet)
-	router.HandleFunc("/stats", getStatsArkeo).Methods(http.MethodGet)
+	router.HandleFunc("/stats", a.getStatsArkeo).Methods(http.MethodGet)
 	router.HandleFunc("/stats/{chain}", getStatsChain).Methods(http.MethodGet)
 
 	providerRouter := router.PathPrefix("/provider").Subrouter()
