@@ -10,7 +10,5 @@ create table blocks
     block_time  timestamptz not null
 );
 
-insert into blocks(height,hash,block_time) values (657957, 'B02EF50091031EF9AAC7E8BBDD98395B89BC42EB90B9138EFE2E5DF79186EC7B','2023-01-12T19:22:57.245474096Z');
-
 ---- create above / drop below ----
 drop table blocks;
