@@ -17,7 +17,7 @@ const (
 	`
 )
 
-var (
+const (
 	sqlFindContract = ` select ` + contractCols + `
 	-- id,
 	-- created,
