@@ -18,7 +18,7 @@ func insert(conn *pgxpool.Conn, sql string, params ...interface{}) (*Entity, err
 		updated time.Time
 		err     error
 	)
-	log.Debugf("sql: %s", sql)
+	log.Debugf("sql: %s\nparams: %v", sql, params)
 	row := conn.QueryRow(context.Background(), sql, params...)
 	if err = row.Scan(&id, &created, &updated); err != nil {
 		return nil, errors.Wrap(err, "error inserting")

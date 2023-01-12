@@ -118,7 +118,6 @@ func (a *IndexerApp) consumeEvents(clients []*tmclient.HTTP) error {
 			for _, evt := range endBlockEvents {
 				switch evt.GetType() {
 				case "validator_payout":
-					// log.Debugf("received validator_payout event")
 					validatorPayoutEvent := types.ValidatorPayoutEvent{}
 					if err := convertEvent(tmAttributeSource(nil, evt, data.Block.Height), &validatorPayoutEvent); err != nil {
 						log.Errorf("error converting validator_payout event: %+v", err)
@@ -232,7 +231,7 @@ func (a *IndexerApp) consumeHistoricalBlock(client *tmclient.HTTP, bheight int64
 		start := time.Now()
 		block, blockErr = client.Block(context.Background(), &bheight)
 		if time.Since(start) > 500*time.Millisecond {
-			log.Warnf("%.3f elapsed reading block %d", bheight)
+			log.Warnf("%.3f elapsed reading block %d", time.Since(start).Seconds(), bheight)
 		}
 	}()
 
@@ -241,7 +240,7 @@ func (a *IndexerApp) consumeHistoricalBlock(client *tmclient.HTTP, bheight int64
 		start := time.Now()
 		blockResults, resultsErr = client.BlockResults(context.Background(), &bheight)
 		if time.Since(start) > 500*time.Millisecond {
-			log.Warnf("%.3f elapsed reading block results %d", bheight)
+			log.Warnf("%.3f elapsed reading block results %d", time.Since(start).Seconds(), bheight)
 		}
 	}()
 	wg.Wait()

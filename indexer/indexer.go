@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -63,36 +64,102 @@ func makeTMClient(baseURL string) (*tmclient.HTTP, error) {
 	return client, nil
 }
 
+const fillThreads = 3
+
+var gaps []*db.BlockGap
+
 func (a *IndexerApp) gapFiller() {
+	var err error
+	workChan := make(chan *db.BlockGap, 64)
 	tm, err := makeTMClient(a.params.TendermintWs)
 	if err != nil {
 		log.Panicf("error creating gapFiller client: %+v", err)
 	}
+
 	ctx := context.Background()
-	latestBlock, err := tm.Block(ctx, nil)
-	if err != nil {
-		log.Panicf("error reading latestBlock: %+v", err)
-	}
-	latestStored, err := a.db.FindLatestBlock()
-	if err != nil {
-		log.Panicf("error finding latest block: %+v", err)
-	}
-
-	targetHeight := latestBlock.Block.Height
-	log.Infof("latest block from node %d, latest stored %d", latestBlock.Block.Height, latestStored.Height)
-
-	for currentHeight := latestStored.Height + 1; currentHeight < targetHeight; currentHeight++ {
-		block, err := a.consumeHistoricalBlock(tm, currentHeight)
+	for {
+		gaps, err = a.db.FindBlockGaps()
 		if err != nil {
-			log.Errorf("error reading block %d: %+v", latestStored.Height)
-			// sleep 1 second to prevent thrashing a down node
-			time.Sleep(time.Second)
+			log.Errorf("error reading blocks from db: %+v", err)
+		}
+
+		latestStored, err := a.db.FindLatestBlock()
+		if err != nil {
+			log.Panicf("error finding latest stored block: %+v", err)
+		}
+
+		latest, err := tm.Block(ctx, nil)
+		if err != nil {
+			log.Panicf("error finding latest block: %+v", err)
+		}
+
+		if latestStored == nil {
+			log.Infof("no latestStored, initializing")
+			gaps = append(gaps, &db.BlockGap{Start: 0, End: latest.Block.Height})
+		} else if latest.Block.Height-latestStored.Height > 1 {
+			log.Infof("%d missed blocks from %d to current %d", latest.Block.Height-latestStored.Height, latestStored.Height, latest.Block.Height)
+			gaps = append(gaps, &db.BlockGap{Start: latestStored.Height + 1, End: latest.Block.Height - 1})
+		}
+
+		if len(gaps) > 0 {
+			log.Infof("have %d gaps to fill: %s", len(gaps), gaps)
+			for i := range gaps {
+				workChan <- gaps[i]
+			}
+
+			startThreads := len(gaps)
+			if startThreads > fillThreads {
+				startThreads = fillThreads
+			}
+
+			var wg sync.WaitGroup
+			wg.Add(len(gaps))
+			for i := 0; i < startThreads; i++ {
+				go func() {
+					for {
+						select {
+						case g := <-workChan:
+							if err := a.fillGap(*g); err != nil {
+								log.Errorf("error filling gap %s", g)
+							}
+							wg.Done()
+						default:
+							log.Infof("no work delivered, done")
+							return
+						}
+					}
+				}()
+			}
+			log.Infof("waiting for %d threads to complete filling %d gaps", startThreads, len(gaps))
+			wg.Wait()
+		}
+
+		// all gaps filled, wait a minute
+		time.Sleep(time.Minute)
+	}
+}
+
+// gaps filled inclusively
+func (a *IndexerApp) fillGap(gap db.BlockGap) error {
+	log.Infof("gap filling %s", gap)
+	tm, err := makeTMClient(a.params.TendermintWs)
+	if err != nil {
+		return errors.Wrapf(err, "error creating tm client: %+v", err)
+	}
+
+	for i := gap.Start; i <= gap.End; i++ {
+		log.Infof("processing %d", i)
+		block, err := a.consumeHistoricalBlock(tm, i)
+		if err != nil {
+			log.Errorf("error consuming block %d: %+v", i, err)
+			continue
 		}
 		if _, err = a.db.InsertBlock(block); err != nil {
-			log.Errorf("error inserting block %d", err)
+			log.Errorf("error inserting block %d: %+v", block.Height, err)
 			time.Sleep(time.Second)
 		}
 	}
+	return nil
 }
 
 const numClients = 3
@@ -112,41 +179,14 @@ func (a *IndexerApp) realtime() {
 		clients[i] = client
 	}
 
-	// determine last seen block from db
-	// indexerStatus, err := a.db.FindIndexerStatus(a.params.IndexerID)
-	// if err != nil {
-	// 	panic(fmt.Sprintf("error getting indexer state from db: %+v", err))
-	// }
-
-	// a.IsSynced.Store(false)
-	// if indexerStatus == nil {
-	// 	// this is the first time we have started the indexer with this db, sync from heigh of 1 (0 will fail)
-	// 	indexerStatus = &db.IndexerStatus{ID: 0, Height: 0}
-	// 	if _, err = a.db.UpdateIndexerStatus(indexerStatus); err != nil {
-	// 		log.Errorf("error writing initial indexer status: %+v", err)
-	// 	}
-	// }
-	// a.Height = indexerStatus.Height
-
-	// go func() {
-	// 	// We kick off new thread to background historical sync while we keep consuming events that are coming in real time.
-	// 	// this should ensure that we don't miss any events since we will end up overlapping with out real time WS subscriptions
-	// 	log.Infof("Starting historical syncing from block height: %d", a.Height)
-	// 	err := a.consumeHistoricalEvents(clients[0])
-	// 	if err != nil {
-	// 		log.Infof("Historical syncing failed")
-	// 		panic(fmt.Sprintf("Historical syncing failed: %+v", err))
-	// 	}
-	// 	log.Infof("Historical syncing completed")
-	// 	a.IsSynced.Store(true)
-	// }()
-
 	a.consumeEvents(clients)
 	a.done <- struct{}{}
 }
 
 func (a *IndexerApp) handleBlockEvent(block *tmtypes.Block) error {
-	a.db.InsertBlock(&db.Block{})
+	if _, err := a.db.InsertBlock(&db.Block{Height: block.Height, Hash: block.Hash().String(), BlockTime: block.Time}); err != nil {
+		return errors.Wrapf(err, "error inserting block")
+	}
 	a.Height = block.Height
 	return nil
 }
