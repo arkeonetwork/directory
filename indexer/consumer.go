@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -49,7 +50,7 @@ func wsAttributeSource(src ctypes.ResultEvent) func() map[string]string {
 	return func() map[string]string { return attribs }
 }
 
-func tmAttributeSource(tx tmtypes.Tx, evt abcitypes.Event, height uint64) func() map[string]string {
+func tmAttributeSource(tx tmtypes.Tx, evt abcitypes.Event, height int64) func() map[string]string {
 	attribs := make(map[string]string, 0)
 	for _, attr := range evt.Attributes {
 		attribs[string(attr.Key)] = string(attr.Value)
@@ -61,7 +62,7 @@ func tmAttributeSource(tx tmtypes.Tx, evt abcitypes.Event, height uint64) func()
 		}
 	}
 
-	attribs["eventHeight"] = strconv.FormatUint(height, 10)
+	attribs["eventHeight"] = strconv.FormatInt(height, 10)
 	if _, ok := attribs["height"]; !ok {
 		attribs["height"] = attribs["eventHeight"]
 	}
@@ -96,6 +97,7 @@ func (a *IndexerApp) consumeEvents(clients []*tmclient.HTTP) error {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 
+	log.Infof("beginning realtime event consumption")
 	for {
 		select {
 		case evt := <-blockEvents:
@@ -107,7 +109,7 @@ func (a *IndexerApp) consumeEvents(clients []*tmclient.HTTP) error {
 			log := log.WithField("height", strconv.FormatInt(data.Block.Height, 10))
 			log.Debugf("received block: %d", data.Block.Height)
 
-			if err := a.handleBlockEvent(data.Block.Height); err != nil {
+			if err := a.handleBlockEvent(data.Block); err != nil {
 				log.Errorf("error handling block event %d: %+v", data.Block.Height, err)
 			}
 
@@ -116,9 +118,8 @@ func (a *IndexerApp) consumeEvents(clients []*tmclient.HTTP) error {
 			for _, evt := range endBlockEvents {
 				switch evt.GetType() {
 				case "validator_payout":
-					// log.Debugf("received validator_payout event")
 					validatorPayoutEvent := types.ValidatorPayoutEvent{}
-					if err := convertEvent(tmAttributeSource(nil, evt, uint64(data.Block.Height)), &validatorPayoutEvent); err != nil {
+					if err := convertEvent(tmAttributeSource(nil, evt, data.Block.Height), &validatorPayoutEvent); err != nil {
 						log.Errorf("error converting validator_payout event: %+v", err)
 						break
 					}
@@ -127,7 +128,7 @@ func (a *IndexerApp) consumeEvents(clients []*tmclient.HTTP) error {
 					}
 				case "contract_settlement":
 					contractSettlementEvent := types.ContractSettlementEvent{}
-					if err := convertEvent(tmAttributeSource(nil, evt, uint64(data.Block.Height)), &contractSettlementEvent); err != nil {
+					if err := convertEvent(tmAttributeSource(nil, evt, data.Block.Height), &contractSettlementEvent); err != nil {
 						log.Errorf("error converting contract_settlement event: %+v", err)
 						break
 					}
@@ -216,86 +217,70 @@ func (a *IndexerApp) consumeEvents(clients []*tmclient.HTTP) error {
 	}
 }
 
-func (a *IndexerApp) consumeHistoricalEvents(client *tmclient.HTTP) error {
-	var currentBlock *ctypes.ResultBlock
-	currentBlock, err := client.Block(context.Background(), nil)
-	if err != nil {
-		return errors.Wrap(err, "error getting current block")
+func (a *IndexerApp) consumeHistoricalBlock(client *tmclient.HTTP, bheight int64) (result *db.Block, err error) {
+
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+
+	var block *ctypes.ResultBlock
+	var blockResults *ctypes.ResultBlockResults
+	var blockErr, resultsErr error
+
+	go func() {
+		defer wg.Done()
+		start := time.Now()
+		block, blockErr = client.Block(context.Background(), &bheight)
+		if time.Since(start) > 500*time.Millisecond {
+			log.Warnf("%.3f elapsed reading block %d", time.Since(start).Seconds(), bheight)
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		start := time.Now()
+		blockResults, resultsErr = client.BlockResults(context.Background(), &bheight)
+		if time.Since(start) > 500*time.Millisecond {
+			log.Warnf("%.3f elapsed reading block results %d", time.Since(start).Seconds(), bheight)
+		}
+	}()
+	wg.Wait()
+
+	if blockErr != nil {
+		return nil, errors.Wrapf(blockErr, "error reading block")
 	}
-	blocksToSync := currentBlock.Block.Height - int64(a.Height)
-	log.Infof("Current block %d, syncing from block %d. %d blocks to go", currentBlock.Block.Height, a.Height, blocksToSync)
-	retries := 10
-	blocksSynced := 0
-	for currentBlock.Block.Height > int64(a.Height) {
-		nextHeight := int64(a.Height)
-		nextBlock, err := client.Block(context.Background(), &nextHeight)
+	if resultsErr != nil {
+		return nil, errors.Wrapf(resultsErr, "error reading block results")
+	}
+
+	log := log.WithField("height", strconv.FormatInt(block.Block.Height, 10))
+	for _, transaction := range block.Block.Txs {
+		txInfo, err := client.Tx(context.Background(), transaction.Hash(), false)
 		if err != nil {
-			log.Errorf("error reading block %d: %+v", nextHeight, err)
-			retries = retries - 1
-			log.Warnf("Getting next block results at height: %d failed, will retry %d more times", nextHeight, retries)
-			time.Sleep(time.Second)
-			if retries == 0 {
-				log.Errorf("Getting next block results at height: %d failed with no additional retries", nextHeight)
-				return errors.Wrapf(err, "error getting block results at height: %d", nextHeight)
-			}
+			log.Warnf("failed to get transaction data for %s", transaction.Hash())
 			continue
 		}
 
-		log := log.WithField("height", strconv.FormatUint(a.Height, 10))
-		for _, transaction := range nextBlock.Block.Txs {
-			txInfo, err := client.Tx(context.Background(), transaction.Hash(), false)
-			if err != nil {
-				log.Warnf("failed to get transaction data for %s", transaction.Hash())
-				continue
+		for _, event := range txInfo.TxResult.Events {
+			log.Debugf("received %s txevent", event.Type)
+			if err := a.handleAbciEvent(event, transaction); err != nil {
+				log.Errorf("error handling abci event %#v\n%+v", event, err)
 			}
-
-			for _, event := range txInfo.TxResult.Events {
-				log.Debugf("received %s txevent", event.Type)
-				if err := a.handleAbciEvent(event, transaction); err != nil {
-					log.Errorf("error handling abci event %#v\n%+v", event, err)
-				}
-			}
-
-			// process block results as well
-			blockResults, err := client.BlockResults(context.Background(), &nextHeight)
-			if err != nil {
-				log.Errorf("error reading block results at height %d: %+v", nextHeight, err)
-			}
-
-			for _, event := range blockResults.EndBlockEvents {
-				log.Debugf("received %s endblock event", event.Type)
-				if err := a.handleAbciEvent(event, nil); err != nil {
-					log.Errorf("error handling abci event %#v\n%+v", event, err)
-				}
-			}
-		}
-		blocksSynced++
-		if blocksSynced%500 == 0 {
-			log.Debugf("synced %d of initial %d", blocksSynced, blocksToSync)
-
-			// update DB periodically to avoid having to sync all over
-			indexerStatus := db.IndexerStatus{
-				ID:     a.params.IndexerID,
-				Height: uint64(nextHeight),
-			}
-			_, err := a.db.UpsertIndexerStatus(&indexerStatus)
-			if err != nil {
-				log.Warnf("error writing block status to db %#v", err)
-			}
-		}
-
-		a.Height++
-		if currentBlock.Block.Height == int64(a.Height) {
-			// we should update to see if new blocks have become available while we were processing
-			currentBlock, err = client.Block(context.Background(), nil)
-			if err != nil {
-				return errors.Wrap(err, "error getting current block")
-			}
-			blocksToSync = currentBlock.Block.Height - int64(a.Height)
-			blocksSynced = 0
 		}
 	}
-	return nil
+
+	for _, event := range blockResults.EndBlockEvents {
+		log.Debugf("received %s endblock event", event.Type)
+		if err := a.handleAbciEvent(event, nil); err != nil {
+			log.Errorf("error handling abci event %#v\n%+v", event, err)
+		}
+	}
+
+	r := &db.Block{
+		Height:    block.Block.Height,
+		Hash:      block.Block.Hash().String(),
+		BlockTime: block.Block.Time,
+	}
+	return r, nil
 }
 
 func (a *IndexerApp) handleAbciEvent(event abcitypes.Event, transaction tmtypes.Tx) error {

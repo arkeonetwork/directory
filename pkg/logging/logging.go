@@ -30,7 +30,7 @@ var logger Logger
 func init() {
 	logger = logrus.StandardLogger()
 
-	logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetLevel(logrus.InfoLevel)
 	logrus.SetReportCaller(true)
 	// logrus.SetFormatter(&logrus.TextFormatter{TimestampFormat: timestampFormat})
 	logrus.SetFormatter(NewCustomLogFormatter())
