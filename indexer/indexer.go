@@ -8,8 +8,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/ArkeoNetwork/common/logging"
+	arkutils "github.com/ArkeoNetwork/common/utils"
 	"github.com/ArkeoNetwork/directory/pkg/db"
-	"github.com/ArkeoNetwork/directory/pkg/logging"
 	"github.com/pkg/errors"
 	tmlog "github.com/tendermint/tendermint/libs/log"
 	tmclient "github.com/tendermint/tendermint/rpc/client/http"
@@ -53,7 +54,7 @@ func (a *IndexerApp) Run() (done <-chan struct{}, err error) {
 	return a.done, nil
 }
 
-func makeTMClient(baseURL string) (*tmclient.HTTP, error) {
+func NewTenderm1intClient(baseURL string) (*tmclient.HTTP, error) {
 	client, err := tmclient.New(baseURL, "/websocket")
 	if err != nil {
 		return nil, errors.Wrapf(err, "error creating websocket client")
@@ -71,7 +72,7 @@ var gaps []*db.BlockGap
 func (a *IndexerApp) gapFiller() {
 	var err error
 	workChan := make(chan *db.BlockGap, 64)
-	tm, err := makeTMClient(a.params.TendermintWs)
+	tm, err := arkutils.NewTendermintClient(a.params.TendermintWs)
 	if err != nil {
 		log.Panicf("error creating gapFiller client: %+v", err)
 	}
@@ -142,7 +143,7 @@ func (a *IndexerApp) gapFiller() {
 // gaps filled inclusively
 func (a *IndexerApp) fillGap(gap db.BlockGap) error {
 	log.Infof("gap filling %s", gap)
-	tm, err := makeTMClient(a.params.TendermintWs)
+	tm, err := arkutils.NewTendermintClient(a.params.TendermintWs)
 	if err != nil {
 		return errors.Wrapf(err, "error creating tm client: %+v", err)
 	}
@@ -155,7 +156,7 @@ func (a *IndexerApp) fillGap(gap db.BlockGap) error {
 			continue
 		}
 		if _, err = a.db.InsertBlock(block); err != nil {
-			log.Errorf("error inserting block %d: %+v", block.Height, err)
+			log.Errorf("error inserting block %d with hash %s: %+v", block.Height, block.Hash, err)
 			time.Sleep(time.Second)
 		}
 	}
@@ -168,7 +169,7 @@ func (a *IndexerApp) realtime() {
 	log.Infof("starting realtime indexing using /websocket at %s", a.params.TendermintWs)
 	clients := make([]*tmclient.HTTP, numClients)
 	for i := 0; i < numClients; i++ {
-		client, err := makeTMClient(a.params.TendermintWs)
+		client, err := arkutils.NewTendermintClient(a.params.TendermintWs)
 		if err != nil {
 			panic(fmt.Sprintf("error creating tm client for %s: %+v", a.params.TendermintWs, err))
 		}

@@ -11,7 +11,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Load reads in a file at the specified path and unmarshals the values into your config struct
+// Load reads in a file at the specified path and unmarshals the values into your config struct.
+// DEPRECATED see common
 func Load(path string, config interface{}) error {
 	viper.SetConfigFile(path)
 	if err := viper.ReadInConfig(); err != nil {
@@ -25,6 +26,7 @@ func Load(path string, config interface{}) error {
 	return nil
 }
 
+// DEPRECATED see common
 func LoadFromEnv(config interface{}, keys ...string) error {
 	envVars := make(map[string]interface{})
 	for _, key := range keys {
