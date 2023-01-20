@@ -125,6 +125,5 @@ require (
 )
 
 replace (
-	github.com/ArkeoNetwork/common => /Users/adamsamere/chaintech/oss/arkeo/common
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 )
