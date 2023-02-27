@@ -5,6 +5,7 @@ metadata:
   namespace: foundation
 data:
   INDEXER_ID: "0" # TODO remove
+  API_LISTEN: "0.0.0.0:80"
   NET: "testnet"
   CHAIN_ID: "arkeo"
   BECH32_PREF_ACC_ADDR: "arkeo"

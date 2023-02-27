@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: arkeo-directory-api
+spec:
+  selector:
+    matchLabels:
+      app: arkeo-directory-api
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: arkeo-directory-api
+    spec:
+      containers:
+      - name: arkeo-directory-api
+        image: ghcr.io/arkeonetwork/directory:latest
+        imagePullPolicy: Always
+        command:
+          - "api"
+        envFrom:
+          - configMapRef:
+              name: directory-config
+        env:
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: directorydbsec
+                  key: host
+            - name: DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: directorydbsec
+                  key: port
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: directorydbsec
+                  key: user
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: directorydbsec
+                  key: password
+            - name: DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: directorydbsec
+                  key: port
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "500m"
+          limits:
+            memory: "512Mi"
+            cpu: "2000m"
+        ports:
+        - containerPort: 80
+          name: api
