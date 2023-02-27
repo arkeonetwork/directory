@@ -1,4 +1,7 @@
 BINARIES := api indexer
+IMAGE=directory
+TAG=latest
+
 # MAKEFLAGS += --no-print-directory
 
 .PHONY: clean build $(BINARIES)
@@ -35,3 +38,14 @@ lint:
 
 install:
 	go install ./cmd/...
+
+docker-build:
+	@docker build --platform=linux/amd64 . --file Dockerfile -t ${IMAGE}:${TAG}
+
+docker-tag:
+	@docker tag ${IMAGE}:${TAG} ghcr.io/arkeonetwork/${IMAGE}:${TAG}
+
+docker-push:
+	@docker push ghcr.io/arkeonetwork/${IMAGE}:${TAG}
+
+push-image: docker-build docker-tag docker-push

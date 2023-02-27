@@ -17,7 +17,6 @@ type Config struct {
 	TendermintApi       string `mapstructure:"TENDERMINT_API"`
 	TendermintWs        string `mapstructure:"TENDERMINT_WS"`
 	ChainID             string `mapstructure:"CHAIN_ID"`
-	IndexerID           int64  `mapstructure:"INDEXER_ID"`
 	Bech32PrefixAccAddr string `mapstructure:"BECH32_PREF_ACC_ADDR"`
 	Bech32PrefixAccPub  string `mapstructure:"BECH32_PREF_ACC_PUB"`
 	DBHost              string `mapstructure:"DB_HOST"`
@@ -72,7 +71,6 @@ func main() {
 
 	app := indexer.NewIndexer(indexer.IndexerAppParams{
 		ChainID:             c.ChainID,
-		IndexerID:           c.IndexerID,
 		Bech32PrefixAccAddr: c.Bech32PrefixAccAddr,
 		Bech32PrefixAccPub:  c.Bech32PrefixAccPub,
 		ArkeoApi:            c.ArkeoApi,
