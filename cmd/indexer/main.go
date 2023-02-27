@@ -6,10 +6,10 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/ArkeoNetwork/common/logging"
 	"github.com/ArkeoNetwork/directory/indexer"
 	"github.com/ArkeoNetwork/directory/pkg/config"
 	"github.com/ArkeoNetwork/directory/pkg/db"
-	"github.com/ArkeoNetwork/directory/pkg/logging"
 )
 
 type Config struct {

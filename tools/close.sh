@@ -3,8 +3,7 @@
 BASEDIR=$(dirname "$0")
 source $BASEDIR/env.sh
 
-# increment each invocation
-CHAIN=eth-mainnet-fullnode
+CHAIN=gaia-mainnet-rpc-archive
 
 USER=bob
 PROVIDER_PUBKEY=$alicekey

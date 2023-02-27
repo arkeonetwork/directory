@@ -3,6 +3,7 @@ module github.com/ArkeoNetwork/directory
 go 1.19
 
 require (
+	github.com/ArkeoNetwork/common v0.0.1
 	github.com/cosmos/cosmos-sdk v0.46.4
 	github.com/georgysavva/scany v1.2.1
 	github.com/google/uuid v1.3.0
@@ -11,10 +12,11 @@ require (
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pkg/errors v0.9.1
-	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/viper v1.13.0
 	github.com/tendermint/tendermint v0.34.22
 )
+
+require github.com/sirupsen/logrus v1.9.0 // indirect
 
 require (
 	cosmossdk.io/errors v1.0.0-beta.7 // indirect
