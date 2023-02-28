@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: arkeo-directory-indexer
+spec:
+  selector:
+    matchLabels:
+      app: arkeo-directory-indexer
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: arkeo-directory-indexer
+    spec:
+      containers:
+      - name: arkeo-directory-indexer
+        image: ghcr.io/arkeonetwork/directory:latest
+        imagePullPolicy: Always
+        command:
+          - "indexer"
+        envFrom:
+          - configMapRef:
+              name: directory-config
+        env:
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: directorydbsec
+                  key: host
+            - name: DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: directorydbsec
+                  key: port
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: directorydbsec
+                  key: user
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: directorydbsec
+                  key: password
+            - name: DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: directorydbsec
+                  key: port
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "500m"
+          limits:
+            memory: "512Mi"
+            cpu: "2000m"
+        # health check
+        ports:
+        - containerPort: 8000

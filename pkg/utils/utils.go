@@ -53,7 +53,7 @@ func IsNearEqual(a float64, b float64, epsilon float64) bool {
 }
 
 // see arkeo-protocol/common/chain.go
-var validChains = map[string]struct{}{"arkeo-mainnet-fullnode": {}, "btc-mainnet-fullnode": {}, "eth-mainnet-fullnode": {}, "swapi.dev": {}}
+var validChains = map[string]struct{}{"arkeo-mainnet-fullnode": {}, "btc-mainnet-fullnode": {}, "eth-mainnet-fullnode": {}, "gaia-mainnet-rpc-archive": {}, "swapi.dev": {}}
 
 func ValidateChain(chain string) (ok bool) {
 	_, ok = validChains[chain]
