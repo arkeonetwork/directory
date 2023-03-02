@@ -1,5 +1,9 @@
 .idea/
 .vscode/
+**/.DS_Store
 cmd/**/__debug_bin
 indexer/.DS_Store
 .env*
+docs/swagger.html
+docs/swagger.yaml
+

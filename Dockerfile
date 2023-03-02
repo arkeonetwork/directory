@@ -24,17 +24,14 @@ COPY . .
 ARG TAG=latest
 RUN make install
 
-# FROM node:19-bullseye as docs
 # docs
-FROM builder as docs
+FROM golang:${GO_VERSION} as docs
 RUN apt-get update -y && apt-get upgrade -y
-RUN apt-get install -y curl apt-transport-https gnupg debian-keyring debian-archive-keyring nodejs npm
+RUN apt-get install -y curl nodejs npm
 
-RUN curl -1sLf 'https://dl.cloudsmith.io/public/go-swagger/go-swagger/gpg.2F8CB673971B5C9E.key' | gpg --dearmor -o /usr/share/keyrings/go-swagger-go-swagger-archive-keyring.gpg
-RUN curl -1sLf 'https://dl.cloudsmith.io/public/go-swagger/go-swagger/config.deb.txt?distro=debian&codename=any-version' > /etc/apt/sources.list.d/go-swagger-go-swagger.list
-RUN apt update -y
-# https://github.com/go-swagger/go-swagger/releases/download/v0.30.4/swagger_linux_amd64 linux/amd64 binary if above fails again
-RUN apt-get install -y swagger
+RUN curl -sLf https://github.com/go-swagger/go-swagger/releases/download/v0.30.4/swagger_linux_amd64 -o /usr/local/bin/swagger
+RUN chmod +x /usr/local/bin/swagger
+
 RUN npm install -g redoc-cli
 
 COPY --from=builder /app /app

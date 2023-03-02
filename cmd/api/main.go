@@ -14,6 +14,7 @@ import (
 
 type Config struct {
 	ApiListenAddr  string `mapstructure:"API_LISTEN"`
+	ApiStaticDir   string `mapstructure:"API_STATIC_DIR"`
 	DBHost         string `mapstructure:"DB_HOST"`
 	DBPort         uint   `mapstructure:"DB_PORT"`
 	DBUser         string `mapstructure:"DB_USER"`
@@ -29,6 +30,7 @@ var (
 	envPath     = flag.String("env", "", "path to env file (default: use os env)")
 	configNames = []string{
 		"API_LISTEN",
+		"API_STATIC_DIR",
 		"DB_HOST",
 		"DB_PORT",
 		"DB_USER",
@@ -60,6 +62,7 @@ func main() {
 	// TODO determine config mechanism
 	api := api.NewApiService(api.ApiServiceParams{
 		ListenAddr: c.ApiListenAddr,
+		StaticDir:  c.ApiStaticDir,
 		DBConfig: db.DBConfig{
 			Host:         c.DBHost,
 			Port:         c.DBPort,

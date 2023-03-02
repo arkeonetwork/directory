@@ -6,6 +6,7 @@ metadata:
 data:
   INDEXER_ID: "0" # TODO remove
   API_LISTEN: "0.0.0.0:80"
+  API_STATIC_DIR: "/var/www/html"
   NET: "testnet"
   CHAIN_ID: "arkeo"
   BECH32_PREF_ACC_ADDR: "arkeo"

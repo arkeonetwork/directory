@@ -20,7 +20,12 @@ test-unit:
 	go test -v -short ./...
 
 swagger:
-	swagger generate spec -o ./swagger.yaml --scan-models
+	swagger generate spec -o ./docs/swagger.yaml --scan-models
+
+# redoc-cli: install with `npm install -g redoc-cli`
+swagger-html: swagger
+	redoc-cli bundle -o docs/swagger.html docs/swagger.yaml
+
 swagger-serve: swagger
 	swagger serve -F=swagger swagger.yaml
 
@@ -39,7 +44,7 @@ lint:
 install:
 	go install ./cmd/...
 
-docker-build:
+docker-build: swagger-html
 	@docker build --platform=linux/amd64 . --file Dockerfile -t ${IMAGE}:${TAG}
 
 docker-tag:
