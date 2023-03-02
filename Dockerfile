@@ -57,7 +57,4 @@ COPY --from=docs /app/docs/swagger.html /var/www/html/index.html
 COPY --from=docs /app/docs/swagger.yaml /var/www/html/swagger.yaml
 
 COPY scripts /scripts
-
-WORKDIR /root
-RUN rm -rf /app
 CMD ["indexer"]
