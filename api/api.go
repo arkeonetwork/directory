@@ -21,6 +21,7 @@ type ApiService struct {
 
 type ApiServiceParams struct {
 	ListenAddr string
+	StaticDir  string
 	DBConfig   db.DBConfig
 }
 
@@ -61,6 +62,15 @@ func buildRouter(a *ApiService) *mux.Router {
 	router.HandleFunc("/health", handleHealth).Methods(http.MethodGet)
 	router.HandleFunc("/stats", a.getStatsArkeo).Methods(http.MethodGet)
 	router.HandleFunc("/stats/{chain}", getStatsChain).Methods(http.MethodGet)
+
+	if a.params.StaticDir == "" {
+		log.Warnf("API_STATIC_DIR not set, using ./auto_static")
+		a.params.StaticDir = "./auto_static"
+	}
+
+	log.Infof("serving static files from %s", a.params.StaticDir)
+	fileServer := http.FileServer(http.Dir(a.params.StaticDir))
+	router.PathPrefix("/docs").Handler(http.StripPrefix("/docs", fileServer))
 
 	providerRouter := router.PathPrefix("/provider").Subrouter()
 	providerRouter.HandleFunc("/{pubkey}", a.getProvider).Methods(http.MethodGet)
