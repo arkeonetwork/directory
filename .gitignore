@@ -6,4 +6,5 @@ indexer/.DS_Store
 .env*
 docs/swagger.html
 docs/swagger.yaml
-
+.arkeo/
+.sentinel/
