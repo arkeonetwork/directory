@@ -1,7 +1,7 @@
 package types
 
 type BondProviderEvent struct {
-	Pubkey       string `mapstructure:"pubkey"`
+	Pubkey       string `mapstructure:"provider"`
 	Chain        string `mapstructure:"chain"`
 	Height       int64  `mapstructure:"height"`
 	TxID         string `mapstructure:"hash"`
@@ -17,7 +17,7 @@ var (
 )
 
 type BaseContractEvent struct {
-	ProviderPubkey string `mapstructure:"pubkey"`
+	ProviderPubkey string `mapstructure:"provider"`
 	Chain          string `mapstructure:"chain"`
 	ClientPubkey   string `mapstructure:"client"`
 	DelegatePubkey string `mapstructure:"delegate"` // see BaseContractEvent.GetDelegatePubkey()
@@ -72,7 +72,7 @@ var (
 )
 
 type ModProviderEvent struct {
-	Pubkey              string         `mapstructure:"pubkey"`
+	Pubkey              string         `mapstructure:"pubkey"` // TODO provider
 	Chain               string         `mapstructure:"chain"`
 	Height              int64          `mapstructure:"height"`
 	TxID                string         `mapstructure:"hash"`
