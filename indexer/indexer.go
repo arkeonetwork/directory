@@ -50,7 +50,7 @@ func (a *IndexerApp) Run() (done <-chan struct{}, err error) {
 	// initialize by reading all existing providers?
 	a.done = make(chan struct{})
 	go a.realtime()
-	go a.gapFiller()
+	// go a.gapFiller()
 	return a.done, nil
 }
 
@@ -96,7 +96,7 @@ func (a *IndexerApp) gapFiller() {
 
 		if latestStored == nil {
 			log.Infof("no latestStored, initializing")
-			gaps = append(gaps, &db.BlockGap{Start: 0, End: latest.Block.Height})
+			gaps = append(gaps, &db.BlockGap{Start: 1, End: latest.Block.Height})
 		} else if latest.Block.Height-latestStored.Height > 1 {
 			log.Infof("%d missed blocks from %d to current %d", latest.Block.Height-latestStored.Height, latestStored.Height, latest.Block.Height)
 			gaps = append(gaps, &db.BlockGap{Start: latestStored.Height + 1, End: latest.Block.Height - 1})

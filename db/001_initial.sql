@@ -6,8 +6,8 @@ create table provider_status
     status text   not null unique
 );
 
-insert into provider_status(status) values ('Online');
-insert into provider_status(status) values ('Offline');
+insert into provider_status(status) values ('ONLINE');
+insert into provider_status(status) values ('OFFLINE');
 
 create table contract_types
 (
@@ -18,9 +18,9 @@ create table contract_types
 );
 
 insert into contract_types(val)
-values ('PayAsYouGo');
+values ('PAY_AS_YOU_GO');
 insert into contract_types(val)
-values ('Subscription');
+values ('SUBSCRIPTION');
 
 ---- create above / drop below ----
 -- undo --

@@ -262,7 +262,7 @@ func (a *IndexerApp) consumeHistoricalBlock(client *tmclient.HTTP, bheight int64
 
 		for _, event := range txInfo.TxResult.Events {
 			log.Debugf("received %s txevent", event.Type)
-			if err := a.handleAbciEvent(event, transaction); err != nil {
+			if err := a.handleAbciEvent(event, transaction, block.Block.Height); err != nil {
 				log.Errorf("error handling abci event %#v\n%+v", event, err)
 			}
 		}
@@ -270,7 +270,7 @@ func (a *IndexerApp) consumeHistoricalBlock(client *tmclient.HTTP, bheight int64
 
 	for _, event := range blockResults.EndBlockEvents {
 		log.Debugf("received %s endblock event", event.Type)
-		if err := a.handleAbciEvent(event, nil); err != nil {
+		if err := a.handleAbciEvent(event, nil, block.Block.Height); err != nil {
 			log.Errorf("error handling abci event %#v\n%+v", event, err)
 		}
 	}
@@ -283,12 +283,12 @@ func (a *IndexerApp) consumeHistoricalBlock(client *tmclient.HTTP, bheight int64
 	return r, nil
 }
 
-func (a *IndexerApp) handleAbciEvent(event abcitypes.Event, transaction tmtypes.Tx) error {
+func (a *IndexerApp) handleAbciEvent(event abcitypes.Event, transaction tmtypes.Tx, height int64) error {
 	var err error
 	switch event.Type {
 	case "provider_bond":
 		bondProviderEvent := types.BondProviderEvent{}
-		if err = convertEvent(tmAttributeSource(transaction, event, a.Height), &bondProviderEvent); err != nil {
+		if err = convertEvent(tmAttributeSource(transaction, event, height), &bondProviderEvent); err != nil {
 			log.Errorf("error converting %s event: %+v", event.Type, err)
 			break
 		}
@@ -297,7 +297,7 @@ func (a *IndexerApp) handleAbciEvent(event abcitypes.Event, transaction tmtypes.
 		}
 	case "provider_mod":
 		modProviderEvent := types.ModProviderEvent{}
-		if err = convertEvent(tmAttributeSource(transaction, event, a.Height), &modProviderEvent); err != nil {
+		if err = convertEvent(tmAttributeSource(transaction, event, height), &modProviderEvent); err != nil {
 			log.Errorf("error converting %s event: %+v", event.Type, err)
 			break
 		}
@@ -306,7 +306,7 @@ func (a *IndexerApp) handleAbciEvent(event abcitypes.Event, transaction tmtypes.
 		}
 	case "open_contract":
 		openContractEvent := types.OpenContractEvent{}
-		if err := convertEvent(tmAttributeSource(transaction, event, a.Height), &openContractEvent); err != nil {
+		if err := convertEvent(tmAttributeSource(transaction, event, height), &openContractEvent); err != nil {
 			log.Errorf("error converting %s event: %+v", event.Type, err)
 			break
 		}
@@ -315,7 +315,7 @@ func (a *IndexerApp) handleAbciEvent(event abcitypes.Event, transaction tmtypes.
 		}
 	case "claim_contract_income":
 		contractSettlementEvent := types.ContractSettlementEvent{}
-		if err := convertEvent(tmAttributeSource(transaction, event, a.Height), &contractSettlementEvent); err != nil {
+		if err := convertEvent(tmAttributeSource(transaction, event, height), &contractSettlementEvent); err != nil {
 			log.Errorf("error converting claim_contract_income event: %+v", err)
 			break
 		}
@@ -324,7 +324,7 @@ func (a *IndexerApp) handleAbciEvent(event abcitypes.Event, transaction tmtypes.
 		}
 	case "validator_payout":
 		validatorPayoutEvent := types.ValidatorPayoutEvent{}
-		if err := convertEvent(tmAttributeSource(transaction, event, a.Height), &validatorPayoutEvent); err != nil {
+		if err := convertEvent(tmAttributeSource(transaction, event, height), &validatorPayoutEvent); err != nil {
 			log.Errorf("error converting validatorPayoutEvent event: %+v", err)
 			break
 		}
@@ -333,7 +333,7 @@ func (a *IndexerApp) handleAbciEvent(event abcitypes.Event, transaction tmtypes.
 		}
 	case "contract_settlement":
 		contractSettlementEvent := types.ContractSettlementEvent{}
-		if err := convertEvent(tmAttributeSource(transaction, event, a.Height), &contractSettlementEvent); err != nil {
+		if err := convertEvent(tmAttributeSource(transaction, event, height), &contractSettlementEvent); err != nil {
 			log.Errorf("error converting contractSettlementEvent: %+v", err)
 			break
 		}
@@ -343,7 +343,7 @@ func (a *IndexerApp) handleAbciEvent(event abcitypes.Event, transaction tmtypes.
 	case "close_contract":
 		log.Debugf("received close_contract event")
 		closeContractEvent := types.CloseContractEvent{}
-		if err := convertEvent(tmAttributeSource(transaction, event, a.Height), &closeContractEvent); err != nil {
+		if err := convertEvent(tmAttributeSource(transaction, event, height), &closeContractEvent); err != nil {
 			log.Errorf("error converting close_contract event: %+v", err)
 			break
 		}

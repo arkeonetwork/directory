@@ -1,10 +1,11 @@
 #!/bin/bash
 export ARKEOD_HOST=http://testnet-seed.arkeo.shapeshift.com:26657
 export ARKEOD_HOST_LCD=http://testnet-seed.arkeo.shapeshift.com:1317
+export METAURL="http://testnet-sentinel.arkeo.shapeshift.com:3636/metadata.json"
 
 # export ARKEOD_HOST=http://localhost:26657
 # export ARKEOD_HOST_LCD=http://localhost:1317
-
+# export METAURL="http://localhost:3636/metadata.json"
 
 export ARKEOD_KEYRING_BACKEND=test
 
