@@ -15,5 +15,4 @@ echo "Using contractID $CONTRACT_ID"
 
 arkeod tx arkeo close-contract --from $USER -y $CONTRACT_ID
 
-# arkeod tx arkeo open-contract --from $USER $PROVIDER_PUBKEY eth-mainnet-fullnode $CLIENT_PUBKEY 1 100 100 20  -y
 echo "done"
