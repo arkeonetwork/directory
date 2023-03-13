@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: arkeo-directory-indexer
-        image: ghcr.io/arkeonetwork/directory:latest
+        image: ghcr.io/arkeonetwork/directory:testnet
         imagePullPolicy: Always
         command:
           - "indexer"

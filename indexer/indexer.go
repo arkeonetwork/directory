@@ -50,7 +50,7 @@ func (a *IndexerApp) Run() (done <-chan struct{}, err error) {
 	// initialize by reading all existing providers?
 	a.done = make(chan struct{})
 	go a.realtime()
-	// go a.gapFiller()
+	go a.gapFiller()
 	return a.done, nil
 }
 
