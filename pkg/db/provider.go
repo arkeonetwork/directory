@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/ArkeoNetwork/directory/pkg/sentinel"
-	"github.com/ArkeoNetwork/directory/pkg/types"
-	"github.com/ArkeoNetwork/directory/pkg/utils"
+	"github.com/arkeonetwork/directory/pkg/sentinel"
+	"github.com/arkeonetwork/directory/pkg/types"
+	"github.com/arkeonetwork/directory/pkg/utils"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/pkg/errors"

@@ -14,8 +14,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/ArkeoNetwork/directory/pkg/sentinel"
-	"github.com/ArkeoNetwork/directory/pkg/types"
+	"github.com/arkeonetwork/directory/pkg/sentinel"
+	"github.com/arkeonetwork/directory/pkg/types"
 	resty "github.com/go-resty/resty/v2"
 )
 

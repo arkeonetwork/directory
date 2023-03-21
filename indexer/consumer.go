@@ -12,8 +12,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ArkeoNetwork/directory/pkg/db"
-	"github.com/ArkeoNetwork/directory/pkg/types"
+	"github.com/arkeonetwork/directory/pkg/db"
+	"github.com/arkeonetwork/directory/pkg/types"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 

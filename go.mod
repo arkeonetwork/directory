@@ -1,9 +1,9 @@
-module github.com/ArkeoNetwork/directory
+module github.com/arkeonetwork/directory
 
 go 1.19
 
 require (
-	github.com/ArkeoNetwork/common v0.0.1
+	github.com/arkeonetwork/common v0.1.1
 	github.com/cosmos/cosmos-sdk v0.46.4
 	github.com/georgysavva/scany v1.2.1
 	github.com/google/uuid v1.3.0

@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ArkeoNetwork/common/logging"
-	"github.com/ArkeoNetwork/directory/pkg/db"
+	"github.com/arkeonetwork/common/logging"
+	"github.com/arkeonetwork/directory/pkg/db"
 	"github.com/gorilla/mux"
 )
 
