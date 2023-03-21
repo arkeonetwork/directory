@@ -1,7 +1,7 @@
 package db
 
 import (
-	"github.com/ArkeoNetwork/directory/pkg/types"
+	"github.com/arkeonetwork/directory/pkg/types"
 	"github.com/pkg/errors"
 )
 

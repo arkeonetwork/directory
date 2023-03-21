@@ -3,7 +3,7 @@ package db
 import (
 	"context"
 
-	"github.com/ArkeoNetwork/directory/pkg/types"
+	"github.com/arkeonetwork/directory/pkg/types"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/pkg/errors"
 )

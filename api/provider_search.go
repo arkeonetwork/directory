@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/ArkeoNetwork/directory/pkg/types"
-	"github.com/ArkeoNetwork/directory/pkg/utils"
+	"github.com/arkeonetwork/directory/pkg/types"
+	"github.com/arkeonetwork/directory/pkg/utils"
 )
 
 // swagger:route Get /search searchProviders

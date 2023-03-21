@@ -83,7 +83,6 @@ services:
       AS_GO_RATE_LIMIT: 10
       AS_GO_RATE_LIMIT_DURATION: "1m"
       CLAIM_STORE_LOCATION: "/root/.arkeo/claims"
-      TMHOME: "/root/.arkeo"
       GAIA_RPC_ARCHIVE_HOST: "http://176.34.207.130:26657"
     entrypoint: "/scripts/sentinel.sh"
     command: sentinel

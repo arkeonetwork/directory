@@ -3,7 +3,7 @@ package utils
 import (
 	"testing"
 
-	"github.com/ArkeoNetwork/directory/pkg/types"
+	"github.com/arkeonetwork/directory/pkg/types"
 )
 
 func TestParseCoordinates(t *testing.T) {
@@ -70,7 +70,7 @@ func TestParseContractType(t *testing.T) {
 }
 
 func TestDownloadProviderMetadata(t *testing.T) {
-	uri := "https://raw.githubusercontent.com/ArkeoNetwork/directory/main/docs/sample-metadata.json"
+	uri := "https://raw.githubusercontent.com/arkeonetwork/directory/main/docs/sample-metadata.json"
 	metadata, err := DownloadProviderMetadata(uri, 5, 1e6)
 	if metadata == nil {
 		t.FailNow()

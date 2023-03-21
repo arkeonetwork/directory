@@ -8,9 +8,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/ArkeoNetwork/common/logging"
-	arkutils "github.com/ArkeoNetwork/common/utils"
-	"github.com/ArkeoNetwork/directory/pkg/db"
+	"github.com/arkeonetwork/common/logging"
+	arkutils "github.com/arkeonetwork/common/utils"
+	"github.com/arkeonetwork/directory/pkg/db"
 	"github.com/pkg/errors"
 	tmlog "github.com/tendermint/tendermint/libs/log"
 	tmclient "github.com/tendermint/tendermint/rpc/client/http"

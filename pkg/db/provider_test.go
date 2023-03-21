@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ArkeoNetwork/directory/pkg/sentinel"
-	"github.com/ArkeoNetwork/directory/pkg/types"
+	"github.com/arkeonetwork/directory/pkg/sentinel"
+	"github.com/arkeonetwork/directory/pkg/types"
 	"github.com/google/uuid"
 )
 

@@ -5,9 +5,9 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/ArkeoNetwork/directory/pkg/db"
-	"github.com/ArkeoNetwork/directory/pkg/types"
-	"github.com/ArkeoNetwork/directory/pkg/utils"
+	"github.com/arkeonetwork/directory/pkg/db"
+	"github.com/arkeonetwork/directory/pkg/types"
+	"github.com/arkeonetwork/directory/pkg/utils"
 	"github.com/pkg/errors"
 )
 

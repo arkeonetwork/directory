@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/ArkeoNetwork/directory/pkg/types"
+	"github.com/arkeonetwork/directory/pkg/types"
 	"github.com/gorilla/mux"
 )
 
